@@ -1,5 +1,7 @@
 <header>
     <ul>
-        <h3>Sign in</h3>
+        <li *ngFor="let item of items">
+            <h3 [title]="item.text" [routerLink]="item.path"> {{item.text}}</h3>
+        </li>
     </ul>
 </header>

@@ -9,6 +9,11 @@ interface Point {
   y: number
 }
 
+interface Connection {
+  a: Point,
+  b: Point
+}
+
 function makeLetterIterator() {
   let letter = 'A';
 
@@ -37,7 +42,10 @@ export class PaintComponent implements AfterViewInit {
 
   letterIt = makeLetterIterator();
   points: Point[] = [];
-  toggled?: number;
+  connections: Connection[] = [];
+  hovered?: Point;
+  toggled?: Point;
+
   mouseDown: boolean = false;
 
   ngAfterViewInit(): void {
@@ -61,75 +69,100 @@ export class PaintComponent implements AfterViewInit {
     let x = e.offsetX;
     let y = e.offsetY;
 
-    let redraw = false;
-    // can be optimized
-    this.toggled = undefined;
+    this.hovered = undefined;
 
-    for (const [i, point] of this.points.entries()) {
+    for (const point of this.points) {
       let dist = Math.sqrt((Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2)))
-      const TOGGLE_PADDING = 2;
-      const RADIUS = POINT_SIZE + TOGGLE_PADDING;
-      console.log(dist)
+      // const TOGGLE_PADDING = 2;
+      // const RADIUS = POINT_SIZE + TOGGLE_PADDING;
+      // console.log(dist)
       if (dist <= TOGGLE_DIST) {
-
-
-        redraw = true;
-        this.toggled = i;
+        this.hovered = point;
         break;
       }
     }
 
-    // if (redraw) {
-    this.draw();
-    // }
+    this.draw(x, y);
   }
 
   onMouseDown(e: MouseEvent) {
+
+    if (e.button === 2) {
+      this.toggled = undefined;
+      this.draw(0, 0);
+      return;
+    }
+
     let point = {
       x: e.offsetX,
       y: e.offsetY,
       letter: this.letterIt.next().value
     };
-    console.log(this.toggled);
+    console.log(this.hovered);
 
     if (!this.context) {
       return;
     }
 
+    if (this.hovered !== undefined) {
+      // two points
+      if (this.toggled !== undefined && this.hovered !== this.toggled) {
+        this.connections.push({ a: this.toggled, b: this.hovered });
+      }
 
-
-    // let last_point = this.points.pop();
-
-    // if (last_point) {
-
-    //   this.context.moveTo(last_point.x, last_point.y);
-
-    //   this.context.lineTo(point.x, point.y);
-    //   this.context.stroke();
-    // }
-
-    if (this.toggled) {
+      this.toggled = this.hovered;
+      this.onMouseMove(e);
 
     } else {
       this.points.push(point);
+      this.onMouseMove(e);
+      this.onMouseDown(e);
     }
-    this.draw();
+
+    this.draw(point.x, point.y);
   }
 
-  draw() {
-    if (this.context) {
-      this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+  draw(x: number, y: number) {
+    if (!this.context) {
+      return;
     }
 
-    if (this.toggled) {
-      this.drawPoint(this.points[this.toggled], POINT_SIZE + TEXT_PADDING, 'green');
+    this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+
+    if (this.hovered !== undefined) {
+      this.drawPoint(this.hovered, POINT_SIZE + TEXT_PADDING, 'green');
+      console.log("hovered: ", this.hovered);
     }
-    console.log("toggled", this.toggled)
+
+    if (this.toggled !== undefined) {
+      this.drawPoint(this.toggled, POINT_SIZE + TEXT_PADDING, 'green');
+      console.log("toggled: ", this.toggled);
+    }
+
     for (let point of this.points) {
       this.drawPoint(point, POINT_SIZE, 'black');
     }
-    
 
+    for (let points of this.connections) {
+      this.drawLine(points.a.x, points.a.y, points.b.x, points.b.y);
+    }
+
+    if (this.toggled !== undefined) {
+      this.drawLine(x, y, this.toggled.x, this.toggled.y);
+    }
+  }
+
+  drawLine(x1: number, y1: number, x2: number, y2: number) {
+    if (!this.context) {
+      return;
+    }
+
+    this.context.beginPath();
+    this.context.lineWidth = 2;
+    this.context.strokeStyle = 'black';
+    this.context.moveTo(x1, y1);
+    this.context.lineTo(x2, y2);
+    this.context.stroke();
   }
 
   drawPoint(point: Point, radius: number, color: string) {
@@ -144,10 +177,10 @@ export class PaintComponent implements AfterViewInit {
     this.context.ellipse(point.x, point.y, radius, radius, 0, 0, 2 * Math.PI);
     this.context.fill();
 
-    this.context.lineWidth = 2;
-    this.context.lineTo(point.x, point.y);
+    // this.context.lineWidth = 2;
+    // this.context.lineTo(point.x, point.y);
 
-    this.context.fill();
+    // this.context.fill();
 
     this.context.beginPath();
     this.context.textAlign = 'center';
