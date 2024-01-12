@@ -1,1 +1,3 @@
-<canvas #drawCanvas (mousedown)="onMouseDown($event)" (mousemove)="onMouseMove($event)" oncontextmenu="return false;">Fail</canvas>
+<canvas #drawCanvas (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" oncontextmenu="return false;">Fail</canvas>
+<input #command matInput>
+<button mat-raised-button color="primary" (click)="onCommand()">Primary</button>

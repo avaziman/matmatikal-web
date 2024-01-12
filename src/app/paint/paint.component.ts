@@ -1,4 +1,7 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+
 const POINT_SIZE = 5;
 const TEXT_PADDING = 5;
 const TOGGLE_DIST = 10;
@@ -27,10 +30,16 @@ function makeLetterIterator() {
   };
   return letterIterator;
 }
+
+interface PointRef {
+  p: Point,
+  index: number,
+}
+
 @Component({
   selector: 'app-paint',
   standalone: true,
-  imports: [],
+  imports: [MatInputModule, MatButtonModule],
   templateUrl: './paint.component.html',
   styleUrl: './paint.component.css'
 })
@@ -38,16 +47,19 @@ export class PaintComponent implements AfterViewInit {
   @ViewChild('drawCanvas'/* , {static: true } */)
   canvas: ElementRef<HTMLCanvasElement> | undefined | null;
 
+  @ViewChild('command'/* , {static: true } */)
+  command: ElementRef<HTMLInputElement> | undefined | null;
+
   context: CanvasRenderingContext2D | undefined | null;
 
   letterIt = makeLetterIterator();
   points: Point[] = [];
   connections: Connection[] = [];
   hovered?: Point;
-  toggled?: Point;
+  toggled?: PointRef;
 
   mouseDown: boolean = false;
-
+  
   ngAfterViewInit(): void {
     if (this.canvas) {
 
@@ -61,10 +73,16 @@ export class PaintComponent implements AfterViewInit {
     }
   }
 
+  onCommand() {
+    console.log(this.command)
+    console.log("Got command", this.command?.nativeElement.value)
+  }
+
   onMouseMove(e: MouseEvent) {
     if (!this.context) {
       return;
     }
+    console.log("mousedown", this.mouseDown);
 
     let x = e.offsetX;
     let y = e.offsetY;
@@ -82,7 +100,18 @@ export class PaintComponent implements AfterViewInit {
       }
     }
 
+    if (this.mouseDown) {
+      if (this.toggled) {
+        this.toggled.p.x = x;
+        this.toggled.p.y = y;
+      }
+    }
+
     this.draw(x, y);
+  }
+
+  onMouseUp(_e: MouseEvent) {
+    this.mouseDown = false;
   }
 
   onMouseDown(e: MouseEvent) {
@@ -106,11 +135,11 @@ export class PaintComponent implements AfterViewInit {
 
     if (this.hovered !== undefined) {
       // two points
-      if (this.toggled !== undefined && this.hovered !== this.toggled) {
-        this.connections.push({ a: this.toggled, b: this.hovered });
+      if (this.toggled !== undefined && this.hovered !== this.toggled.p) {
+        this.connections.push({ a: this.toggled.p, b: this.hovered });
       }
 
-      this.toggled = this.hovered;
+      this.toggled = { p: this.hovered, index: this.points.length - 1 };
       this.onMouseMove(e);
 
     } else {
@@ -120,6 +149,7 @@ export class PaintComponent implements AfterViewInit {
     }
 
     this.draw(point.x, point.y);
+    this.mouseDown = true;
   }
 
   draw(x: number, y: number) {
@@ -135,8 +165,8 @@ export class PaintComponent implements AfterViewInit {
     }
 
     if (this.toggled !== undefined) {
-      this.drawPoint(this.toggled, POINT_SIZE + TEXT_PADDING, 'green');
-      console.log("toggled: ", this.toggled);
+      this.drawPoint(this.toggled.p, POINT_SIZE + TEXT_PADDING, 'green');
+      console.log("toggled: ", this.toggled.p);
     }
 
     for (let point of this.points) {
@@ -148,7 +178,7 @@ export class PaintComponent implements AfterViewInit {
     }
 
     if (this.toggled !== undefined) {
-      this.drawLine(x, y, this.toggled.x, this.toggled.y);
+      this.drawLine(x, y, this.toggled.p.x, this.toggled.p.y);
     }
   }
 
@@ -184,7 +214,7 @@ export class PaintComponent implements AfterViewInit {
 
     this.context.beginPath();
     this.context.textAlign = 'center';
-    this.context.fillText(point.letter, point.x, point.y - (POINT_SIZE + TEXT_PADDING));
+    this.context.fillText(point.letter + `(${point.x}, ${point.y})`, point.x, point.y - (POINT_SIZE + TEXT_PADDING));
   }
 
 }
