@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggleModule } from '@angular/material/button-toggle';
+
 import { MathNode, simplify } from 'mathjs';
 
 const POINT_SIZE = 5;
@@ -49,7 +51,7 @@ interface PointRef {
 @Component({
   selector: 'app-paint',
   standalone: true,
-  imports: [MatInputModule, MatButtonModule],
+  imports: [MatInputModule, MatButtonModule, MatButtonToggleModule],
   templateUrl: './paint.component.html',
   styleUrl: './paint.component.css'
 })
@@ -60,6 +62,10 @@ export class PaintComponent implements AfterViewInit {
   @ViewChild('command'/* , {static: true } */)
   command: ElementRef<HTMLInputElement> | undefined | null;
 
+
+  @ViewChild('geometryType'/* , {static: true } */)
+  geometryType: ElementRef<MatButtonToggleGroup> | undefined | null;
+
   context: CanvasRenderingContext2D | undefined | null;
 
   letterIt = makeLetterIterator();
@@ -67,6 +73,7 @@ export class PaintComponent implements AfterViewInit {
   connections: Connection[] = [];
   hovered?: Point;
   toggled?: PointRef;
+  analytical: boolean = false;
 
   mouseDown: boolean = false;
 
@@ -78,10 +85,11 @@ export class PaintComponent implements AfterViewInit {
       this.context = this.canvas.nativeElement.getContext('2d');
     }
 
-    if (!this.context) {
+    if (!this.context || !this.geometryType) {
       return;
     }
 
+    // this.analytical = (this.geometryType.nativeElement.selected as MatButtonToggle).value === 'analytical';
     this.context.fillStyle = "black";
     // origin point
     // let pos = this.pixelPointPos({ x: 0, y: 0 });
@@ -239,7 +247,9 @@ export class PaintComponent implements AfterViewInit {
       return;
     }
 
-    // this.context.fillText("f(x) = " + c.fx.toString(), (c.a.ppos.x + c.b.ppos.x) / 2, (c.a.ppos.y + c.b.ppos.y) / 2);
+    if (this.analytical) {
+      this.context.fillText("f(x) = " + c.fx.toString(), (c.a.ppos.x + c.b.ppos.x) / 2, (c.a.ppos.y + c.b.ppos.y) / 2);
+    }
 
     this.drawLine(c.a, c.b.ppos);
   }
@@ -278,7 +288,12 @@ export class PaintComponent implements AfterViewInit {
     this.context.beginPath();
     this.context.textAlign = 'center';
 
-    this.context.fillText(point.letter + `(${point.rpos.x}, ${point.rpos.y})`, point.ppos.x, point.ppos.y - TEXT_PADDING * 2);
+    let txt = point.letter;
+    if (this.analytical) {
+      // coordinates
+      txt += `(${point.rpos.x}, ${point.rpos.y})`;
+    }
+    this.context.fillText(txt, point.ppos.x, point.ppos.y - TEXT_PADDING * 2);
   }
 
   realPointPos(ppos: Pos): Pos {
@@ -302,5 +317,10 @@ export class PaintComponent implements AfterViewInit {
   changePos(p: Point, ppos: Pos) {
     p.ppos = ppos;
     p.rpos = this.realPointPos(ppos);
+  }
+
+  geometryTypeChange(change: MatButtonToggleChange) {
+    this.analytical = change.value === 'analytical';
+    this.draw({x: 0, y: 0});
   }
 }

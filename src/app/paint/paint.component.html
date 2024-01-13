@@ -1,3 +1,9 @@
 <canvas #drawCanvas (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" oncontextmenu="return false;">Fail</canvas>
+
 <input #command matInput>
 <button mat-raised-button color="primary" (click)="onCommand()">Primary</button>
+<!-- hook this group to the variable analytical -->
+<mat-button-toggle-group #geometryType name="fontStyle" aria-label="Font Style" (change)="geometryTypeChange($event)">
+    <mat-button-toggle value="plane">Plane</mat-button-toggle>
+    <mat-button-toggle value="analytical">Analytical</mat-button-toggle>
+</mat-button-toggle-group>
