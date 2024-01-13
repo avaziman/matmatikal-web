@@ -1,20 +1,30 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MathNode, simplify } from 'mathjs';
 
 const POINT_SIZE = 5;
 const TEXT_PADDING = 5;
 const TOGGLE_DIST = 10;
+const ORIGIN_PADDING = 10;
 
-interface Point {
-  letter: string,
+interface Pos {
   x: number,
   y: number
 }
 
+interface Point {
+  letter: string,
+  // pixel position
+  ppos: Pos,
+  // real position
+  rpos: Pos
+}
+
 interface Connection {
   a: Point,
-  b: Point
+  b: Point,
+  fx: MathNode
 }
 
 function makeLetterIterator() {
@@ -59,7 +69,7 @@ export class PaintComponent implements AfterViewInit {
   toggled?: PointRef;
 
   mouseDown: boolean = false;
-  
+
   ngAfterViewInit(): void {
     if (this.canvas) {
 
@@ -68,9 +78,46 @@ export class PaintComponent implements AfterViewInit {
       this.context = this.canvas.nativeElement.getContext('2d');
     }
 
-    if (this.context) {
-      this.context.fillStyle = "black";
+    if (!this.context) {
+      return;
     }
+
+    this.context.fillStyle = "black";
+    // origin point
+    // let pos = this.pixelPointPos({ x: 0, y: 0 });
+    // this.addPoint(pos, '');
+
+    // // origin lines
+    // this.addPoint(this.pixelPointPos({ x: 0, y: this.context.canvas.height }), '');
+    // this.addPoint(this.pixelPointPos({ x: this.context.canvas.width, y: 0 }), '');
+
+    // this.addConnection(this.points[0], this.points[1]);
+    // this.addConnection(this.points[0], this.points[2]);
+    this.draw({ x: 0, y: 0 });
+  }
+
+
+  newPoint(ppos: Pos, letter: string): Point {
+    return { ppos: ppos, rpos: this.realPointPos(ppos), letter: letter };
+  }
+
+  addPoint(ppos: Pos, letter: string) {
+    this.points.push(this.newPoint(ppos, letter))
+  }
+
+  newConnection(a: Point, b: Point): Connection {
+    let m = (a.rpos.y - b.rpos.y) / (a.rpos.x - b.rpos.x);
+    let func = simplify(' m*x - m*y + z', { m: m, y: a.rpos.x, z: a.rpos.y }, { exactFractions: false });
+    return { a: a, b: b, fx: func };
+  }
+
+  addConnection(a: Point, b: Point) {
+    this.connections.push(this.newConnection(a, b));
+
+    for (const c of this.connections){ 
+      console.log("LINE", c.a.letter + c.b.letter)
+    }
+    // console.log("lines:", )
   }
 
   onCommand() {
@@ -82,7 +129,7 @@ export class PaintComponent implements AfterViewInit {
     if (!this.context) {
       return;
     }
-    console.log("mousedown", this.mouseDown);
+    // console.log("mousedown", this.mouseDown);
 
     let x = e.offsetX;
     let y = e.offsetY;
@@ -90,10 +137,7 @@ export class PaintComponent implements AfterViewInit {
     this.hovered = undefined;
 
     for (const point of this.points) {
-      let dist = Math.sqrt((Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2)))
-      // const TOGGLE_PADDING = 2;
-      // const RADIUS = POINT_SIZE + TOGGLE_PADDING;
-      // console.log(dist)
+      let dist = Math.sqrt((Math.pow(point.ppos.x - x, 2) + Math.pow(point.ppos.y - y, 2)));
       if (dist <= TOGGLE_DIST) {
         this.hovered = point;
         break;
@@ -102,12 +146,19 @@ export class PaintComponent implements AfterViewInit {
 
     if (this.mouseDown) {
       if (this.toggled) {
-        this.toggled.p.x = x;
-        this.toggled.p.y = y;
+        // point moved
+        this.changePos(this.toggled.p, { x: x, y: y });
+
+        for (let i = 0; i < this.connections.length; i++) {
+          let c = this.connections[i];
+          if (c.a === this.toggled.p || c.b === this.toggled.p) {
+            this.connections[i] = this.newConnection(c.a, c.b);
+          }
+        }
       }
     }
 
-    this.draw(x, y);
+    this.draw({ x: x, y: y });
   }
 
   onMouseUp(_e: MouseEvent) {
@@ -118,13 +169,14 @@ export class PaintComponent implements AfterViewInit {
 
     if (e.button === 2) {
       this.toggled = undefined;
-      this.draw(0, 0);
+      this.draw({ x: 0, y: 0 });
       return;
     }
 
+    let ppos = { x: e.offsetX, y: e.offsetY };
     let point = {
-      x: e.offsetX,
-      y: e.offsetY,
+      ppos: ppos,
+      rpos: this.realPointPos(ppos),
       letter: this.letterIt.next().value
     };
     console.log(this.hovered);
@@ -136,7 +188,7 @@ export class PaintComponent implements AfterViewInit {
     if (this.hovered !== undefined) {
       // two points
       if (this.toggled !== undefined && this.hovered !== this.toggled.p) {
-        this.connections.push({ a: this.toggled.p, b: this.hovered });
+        this.addConnection(this.hovered, this.toggled.p);
       }
 
       this.toggled = { p: this.hovered, index: this.points.length - 1 };
@@ -148,11 +200,11 @@ export class PaintComponent implements AfterViewInit {
       this.onMouseDown(e);
     }
 
-    this.draw(point.x, point.y);
+    this.draw(point.ppos);
     this.mouseDown = true;
   }
 
-  draw(x: number, y: number) {
+  draw(pos: Pos) {
     if (!this.context) {
       return;
     }
@@ -161,28 +213,38 @@ export class PaintComponent implements AfterViewInit {
 
     if (this.hovered !== undefined) {
       this.drawPoint(this.hovered, POINT_SIZE + TEXT_PADDING, 'green');
-      console.log("hovered: ", this.hovered);
+      // console.log("hovered: ", this.hovered);
     }
 
     if (this.toggled !== undefined) {
       this.drawPoint(this.toggled.p, POINT_SIZE + TEXT_PADDING, 'green');
-      console.log("toggled: ", this.toggled.p);
+      // console.log("toggled: ", this.toggled.p);
     }
 
     for (let point of this.points) {
       this.drawPoint(point, POINT_SIZE, 'black');
     }
 
-    for (let points of this.connections) {
-      this.drawLine(points.a.x, points.a.y, points.b.x, points.b.y);
+    for (let connection of this.connections) {
+      this.drawConnection(connection);
     }
 
     if (this.toggled !== undefined) {
-      this.drawLine(x, y, this.toggled.p.x, this.toggled.p.y);
+      this.drawLine(this.toggled.p, pos);
     }
   }
 
-  drawLine(x1: number, y1: number, x2: number, y2: number) {
+  drawConnection(c: Connection) {
+    if (!this.context) {
+      return;
+    }
+
+    // this.context.fillText("f(x) = " + c.fx.toString(), (c.a.ppos.x + c.b.ppos.x) / 2, (c.a.ppos.y + c.b.ppos.y) / 2);
+
+    this.drawLine(c.a, c.b.ppos);
+  }
+
+  drawLine(p1: Point, p2: Pos) {
     if (!this.context) {
       return;
     }
@@ -190,8 +252,9 @@ export class PaintComponent implements AfterViewInit {
     this.context.beginPath();
     this.context.lineWidth = 2;
     this.context.strokeStyle = 'black';
-    this.context.moveTo(x1, y1);
-    this.context.lineTo(x2, y2);
+
+    this.context.moveTo(p1.ppos.x, p1.ppos.y);
+    this.context.lineTo(p2.x, p2.y);
     this.context.stroke();
   }
 
@@ -204,17 +267,40 @@ export class PaintComponent implements AfterViewInit {
     this.context.strokeStyle = color;
     this.context.fillStyle = color;
 
-    this.context.ellipse(point.x, point.y, radius, radius, 0, 0, 2 * Math.PI);
+    this.context.ellipse(point.ppos.x, point.ppos.y, radius, radius, 0, 0, 2 * Math.PI);
     this.context.fill();
 
-    // this.context.lineWidth = 2;
-    // this.context.lineTo(point.x, point.y);
+    this.context.lineWidth = 2;
+    this.context.lineTo(point.ppos.x, point.ppos.y);
 
-    // this.context.fill();
+    this.context.fill();
 
     this.context.beginPath();
     this.context.textAlign = 'center';
-    this.context.fillText(point.letter + `(${point.x}, ${point.y})`, point.x, point.y - (POINT_SIZE + TEXT_PADDING));
+
+    this.context.fillText(point.letter + `(${point.rpos.x}, ${point.rpos.y})`, point.ppos.x, point.ppos.y - TEXT_PADDING * 2);
   }
 
+  realPointPos(ppos: Pos): Pos {
+
+    if (!this.context) {
+      return { x: 0, y: 0 };
+    }
+
+    return { x: ppos.x - ORIGIN_PADDING, y: this.context.canvas.height - ppos.y - ORIGIN_PADDING }
+  }
+
+  pixelPointPos(ppos: Pos): Pos {
+
+    if (!this.context) {
+      return { x: 0, y: 0 };
+    }
+
+    return { x: ppos.x + ORIGIN_PADDING, y: this.context.canvas.height - ppos.y - ORIGIN_PADDING }
+  }
+
+  changePos(p: Point, ppos: Pos) {
+    p.ppos = ppos;
+    p.rpos = this.realPointPos(ppos);
+  }
 }
