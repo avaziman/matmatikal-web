@@ -2,8 +2,8 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggleModule } from '@angular/material/button-toggle';
-
 import { MathNode, simplify } from 'mathjs';
+import { NgFor } from '@angular/common';
 
 const POINT_SIZE = 5;
 const TEXT_PADDING = 5;
@@ -51,7 +51,7 @@ interface PointRef {
 @Component({
   selector: 'app-paint',
   standalone: true,
-  imports: [MatInputModule, MatButtonModule, MatButtonToggleModule],
+  imports: [MatInputModule, MatButtonModule, MatButtonToggleModule, NgFor],
   templateUrl: './paint.component.html',
   styleUrl: './paint.component.css'
 })
@@ -71,6 +71,7 @@ export class PaintComponent implements AfterViewInit {
   letterIt = makeLetterIterator();
   points: Point[] = [];
   connections: Connection[] = [];
+  lines: string[] = [];
   hovered?: Point;
   toggled?: PointRef;
   analytical: boolean = false;
@@ -120,11 +121,13 @@ export class PaintComponent implements AfterViewInit {
   }
 
   addConnection(a: Point, b: Point) {
+    if (this.lines. a.letter )
     this.connections.push(this.newConnection(a, b));
 
-    for (const c of this.connections){ 
-      console.log("LINE", c.a.letter + c.b.letter)
-    }
+    this.lines = this.connections.map(c => c.a.letter + c.b.letter);
+    // for (const c of this.connections){ 
+    //   console.log("LINE", c.a.letter + c.b.letter)
+    // }
     // console.log("lines:", )
   }
 
@@ -145,6 +148,7 @@ export class PaintComponent implements AfterViewInit {
     this.hovered = undefined;
 
     for (const point of this.points) {
+      if (this.toggled && this.toggled.p === point) { continue; }
       let dist = Math.sqrt((Math.pow(point.ppos.x - x, 2) + Math.pow(point.ppos.y - y, 2)));
       if (dist <= TOGGLE_DIST) {
         this.hovered = point;
@@ -170,6 +174,30 @@ export class PaintComponent implements AfterViewInit {
   }
 
   onMouseUp(_e: MouseEvent) {
+    if (this.toggled && this.hovered && this.toggled.p != this.hovered) {
+      // merge - change toggled to hovered
+      let del =[];
+      for (let i = 0; i < this.connections.length; i++) {
+        let c = this.connections[i];
+        
+        if (c.a === this.toggled.p) {
+          c.a = this.hovered;
+        } else if (c.b === this.toggled.p) {
+          c.b = this.hovered;
+        }
+
+        if (c.a === c.b) {
+          del.push(i);
+        }
+      }
+
+      for (let i of del) {
+        this.connections.splice(i, 1);
+      }
+
+      this.points.splice(this.toggled.index, 1);
+      this.toggled = undefined;
+    }
     this.mouseDown = false;
   }
 
@@ -196,10 +224,10 @@ export class PaintComponent implements AfterViewInit {
     if (this.hovered !== undefined) {
       // two points
       if (this.toggled !== undefined && this.hovered !== this.toggled.p) {
-        this.addConnection(this.hovered, this.toggled.p);
+        this.addConnection(this.toggled.p, this.hovered);
       }
 
-      this.toggled = { p: this.hovered, index: this.points.length - 1 };
+      this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered)};
       this.onMouseMove(e);
 
     } else {
