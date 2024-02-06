@@ -2,7 +2,8 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggle, MatButtonToggleChange, MatButtonToggleGroup, MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MathNode, simplify } from 'mathjs';
+import { MathNode, simplify, parse, ConstantNode } from 'mathjs';
+
 import { NgFor } from '@angular/common';
 
 const POINT_SIZE = 5;
@@ -10,23 +11,36 @@ const TEXT_PADDING = 5;
 const TOGGLE_DIST = 10;
 const ORIGIN_PADDING = 10;
 
-interface Pos {
-  x: number,
-  y: number
+interface PosG<T> {
+  x: T,
+  y: T
 }
+
+type Pos = PosG<number>;
 
 interface Point {
   letter: string,
-  // pixel position
-  ppos: Pos,
-  // real position
-  rpos: Pos
+  pixel_pos: Pos,
+  evaluated_pos: Pos,
+  theoretical_pos: PosG<MathNode>
 }
+
+interface LinearFunc {
+  equation: MathNode,
+  m: MathNode;
+  b: MathNode;
+}
+
+interface Vertical {
+  x: MathNode;
+}
+
+type Line = LinearFunc | Vertical;
 
 interface Connection {
   a: Point,
   b: Point,
-  fx: MathNode
+  equation: Line
 }
 
 function makeLetterIterator() {
@@ -56,14 +70,14 @@ interface PointRef {
   styleUrl: './paint.component.css'
 })
 export class PaintComponent implements AfterViewInit {
-  @ViewChild('drawCanvas'/* , {static: true } */)
+  @ViewChild('drawCanvas', { static: true })
   canvas: ElementRef<HTMLCanvasElement> | undefined | null;
 
-  @ViewChild('command'/* , {static: true } */)
+  @ViewChild('command', { static: true })
   command: ElementRef<HTMLInputElement> | undefined | null;
 
 
-  @ViewChild('geometryType'/* , {static: true } */)
+  @ViewChild('geometryType', { static: true })
   geometryType: ElementRef<MatButtonToggleGroup> | undefined | null;
 
   context: CanvasRenderingContext2D | undefined | null;
@@ -75,8 +89,7 @@ export class PaintComponent implements AfterViewInit {
   hovered?: Point;
   toggled?: PointRef;
   analytical: boolean = false;
-
-  mouseDown: boolean = false;
+  mouseDown = false;
 
   ngAfterViewInit(): void {
     if (this.canvas) {
@@ -91,9 +104,7 @@ export class PaintComponent implements AfterViewInit {
     }
 
     // this.analytical = (this.geometryType.nativeElement.selected as MatButtonToggle).value === 'analytical';
-    this.context.fillStyle = "black";
-    // origin point
-    // let pos = this.pixelPointPos({ x: 0, y: 0 });
+    // this.context..pixelPointPos({ x: 0, y: 0 });
     // this.addPoint(pos, '');
 
     // // origin lines
@@ -107,7 +118,9 @@ export class PaintComponent implements AfterViewInit {
 
 
   newPoint(ppos: Pos, letter: string): Point {
-    return { ppos: ppos, rpos: this.realPointPos(ppos), letter: letter };
+    let evaluated_pos = this.realPointPos(ppos);
+    let theoretical_pos = { x: new ConstantNode(evaluated_pos.x), y: new ConstantNode(evaluated_pos.y) }
+    return { pixel_pos: ppos, evaluated_pos, theoretical_pos, letter: letter };
   }
 
   addPoint(ppos: Pos, letter: string) {
@@ -115,13 +128,35 @@ export class PaintComponent implements AfterViewInit {
   }
 
   newConnection(a: Point, b: Point): Connection {
-    let m = (a.rpos.y - b.rpos.y) / (a.rpos.x - b.rpos.x);
-    let func = simplify(' m*x - m*y + z', { m: m, y: a.rpos.x, z: a.rpos.y }, { exactFractions: false });
-    return { a: a, b: b, fx: func };
+    let m = simplify('(xo - xt) / (yo - yt)', { xo: a.theoretical_pos.x, xt: b.theoretical_pos.x, yo: a.theoretical_pos.y, yt: b.theoretical_pos.y });
+
+    let func;
+    if (Math.abs(m.evaluate()) == Infinity) {
+      // vertical line
+      func = { x: a.theoretical_pos.x };
+    } else {
+      // y - y1 = m(x - x1) => y = mx -mx1 + y1
+      let b = simplify('-m * X + Y', { m, X: a.theoretical_pos.x, Y: a.theoretical_pos.y });
+      let equation = simplify('m * x + b', { m, b });
+      console.log("b", b.toString())
+      console.log("equation", equation.toString())
+
+      func = {
+        equation: equation,
+        m: m,
+        b: b,
+      };
+    }
+    
+
+    return {
+      a: a, b: b,
+      equation: func
+    };
   }
 
   addConnection(a: Point, b: Point) {
-    if (this.lines. a.letter )
+    // if (this.lines. a.letter )
     this.connections.push(this.newConnection(a, b));
 
     this.lines = this.connections.map(c => c.a.letter + c.b.letter);
@@ -136,6 +171,18 @@ export class PaintComponent implements AfterViewInit {
     console.log("Got command", this.command?.nativeElement.value)
   }
 
+  distWithin(p1: Pos, p2: Pos, d: number): boolean {
+    let dx = Math.abs(p1.x - p2.x);
+    if (dx > TOGGLE_DIST) return false;
+    let dy = Math.abs(p1.y - p2.y);
+    if (dy > TOGGLE_DIST) return false;
+
+    let dist = Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
+    if (dist > d) return false;
+
+    return true;
+  }
+
   onMouseMove(e: MouseEvent) {
     if (!this.context) {
       return;
@@ -144,15 +191,49 @@ export class PaintComponent implements AfterViewInit {
 
     let x = e.offsetX;
     let y = e.offsetY;
+    let mousePos = { x, y };
 
     this.hovered = undefined;
 
     for (const point of this.points) {
       if (this.toggled && this.toggled.p === point) { continue; }
-      let dist = Math.sqrt((Math.pow(point.ppos.x - x, 2) + Math.pow(point.ppos.y - y, 2)));
-      if (dist <= TOGGLE_DIST) {
+
+      if (this.distWithin(mousePos, point.pixel_pos, TOGGLE_DIST)) {
         this.hovered = point;
         break;
+      }
+    }
+
+    // y - y1 = -m(x - x1) => y = -mx + mx1 + y1
+
+    // find dist
+    // -mx + mx1 + y1 = mx + b
+    // 2mx + b = mx1 + y1
+    // x = (mx1 + y1 - b) / 2m
+
+    // point on line, no mathematical importance
+    for (const connection of this.connections) {
+      // perpendicular
+
+      if ("m" in connection.equation) {
+        let perpX = simplify("(m * x + y - b) / 2m", { x, y, m: connection.equation.m, b: connection.equation.b }).evaluate();
+        console.log("X", perpX.toString())
+
+        let perpY = connection.equation.equation.evaluate({ x: perpX });
+        console.log("Y", perpY.toString())
+        console.log("MOUSEPOS", mousePos)
+
+        let pos = { x: perpX, y: perpY };
+
+        if (this.distWithin(pos, this.realPointPos(mousePos), TOGGLE_DIST * 2)) {
+          this.hovered = {
+            pixel_pos: this.pixelPointPos(pos),
+            evaluated_pos: pos,
+            theoretical_pos: { x: new ConstantNode(0), y: new ConstantNode(0) },
+            letter: this.letterIt.next().value
+          };
+          console.log("OVER")
+        }
       }
     }
 
@@ -176,10 +257,10 @@ export class PaintComponent implements AfterViewInit {
   onMouseUp(_e: MouseEvent) {
     if (this.toggled && this.hovered && this.toggled.p != this.hovered) {
       // merge - change toggled to hovered
-      let del =[];
+      let del = [];
       for (let i = 0; i < this.connections.length; i++) {
         let c = this.connections[i];
-        
+
         if (c.a === this.toggled.p) {
           c.a = this.hovered;
         } else if (c.b === this.toggled.p) {
@@ -210,9 +291,12 @@ export class PaintComponent implements AfterViewInit {
     }
 
     let ppos = { x: e.offsetX, y: e.offsetY };
+    let evaluated_pos = this.realPointPos(ppos);
+
     let point = {
-      ppos: ppos,
-      rpos: this.realPointPos(ppos),
+      pixel_pos: ppos,
+      evaluated_pos: evaluated_pos,
+      theoretical_pos: { x: new ConstantNode(evaluated_pos.x), y: new ConstantNode(evaluated_pos.y) },
       letter: this.letterIt.next().value
     };
     console.log(this.hovered);
@@ -227,7 +311,7 @@ export class PaintComponent implements AfterViewInit {
         this.addConnection(this.toggled.p, this.hovered);
       }
 
-      this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered)};
+      this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered) };
       this.onMouseMove(e);
 
     } else {
@@ -236,7 +320,7 @@ export class PaintComponent implements AfterViewInit {
       this.onMouseDown(e);
     }
 
-    this.draw(point.ppos);
+    this.draw(point.pixel_pos);
     this.mouseDown = true;
   }
 
@@ -276,11 +360,16 @@ export class PaintComponent implements AfterViewInit {
     }
 
     if (this.analytical) {
-      this.context.fillText("f(x) = " + c.fx.toString(), (c.a.ppos.x + c.b.ppos.x) / 2, (c.a.ppos.y + c.b.ppos.y) / 2);
+      let text = '';
+      // if (c.equation instanceof LinearFunc) {
+      //   text = `y = ${c.equation.m}x + ${}`;
+      // }
+      // this.context.fillText("f(x) = " + c.fx.toString(), (c.a.pixel_pos.x + c.b.pixel_pos.x) / 2, (c.a.pixel_pos.y + c.b.pixel_pos.y) / 2);
     }
 
-    this.drawLine(c.a, c.b.ppos);
+    this.drawLine(c.a, c.b.pixel_pos);
   }
+
 
   drawLine(p1: Point, p2: Pos) {
     if (!this.context) {
@@ -291,7 +380,7 @@ export class PaintComponent implements AfterViewInit {
     this.context.lineWidth = 2;
     this.context.strokeStyle = 'black';
 
-    this.context.moveTo(p1.ppos.x, p1.ppos.y);
+    this.context.moveTo(p1.pixel_pos.x, p1.pixel_pos.y);
     this.context.lineTo(p2.x, p2.y);
     this.context.stroke();
   }
@@ -305,11 +394,11 @@ export class PaintComponent implements AfterViewInit {
     this.context.strokeStyle = color;
     this.context.fillStyle = color;
 
-    this.context.ellipse(point.ppos.x, point.ppos.y, radius, radius, 0, 0, 2 * Math.PI);
+    this.context.ellipse(point.pixel_pos.x, point.pixel_pos.y, radius, radius, 0, 0, 2 * Math.PI);
     this.context.fill();
 
     this.context.lineWidth = 2;
-    this.context.lineTo(point.ppos.x, point.ppos.y);
+    this.context.lineTo(point.pixel_pos.x, point.pixel_pos.y);
 
     this.context.fill();
 
@@ -319,9 +408,9 @@ export class PaintComponent implements AfterViewInit {
     let txt = point.letter;
     if (this.analytical) {
       // coordinates
-      txt += `(${point.rpos.x}, ${point.rpos.y})`;
+      txt += `(${point.evaluated_pos.x}, ${point.evaluated_pos.y})`;
     }
-    this.context.fillText(txt, point.ppos.x, point.ppos.y - TEXT_PADDING * 2);
+    this.context.fillText(txt, point.pixel_pos.x, point.pixel_pos.y - TEXT_PADDING * 2);
   }
 
   realPointPos(ppos: Pos): Pos {
@@ -330,7 +419,10 @@ export class PaintComponent implements AfterViewInit {
       return { x: 0, y: 0 };
     }
 
-    return { x: ppos.x - ORIGIN_PADDING, y: this.context.canvas.height - ppos.y - ORIGIN_PADDING }
+    return {
+      x: ppos.x - ORIGIN_PADDING,
+      y: this.context.canvas.height - ppos.y - ORIGIN_PADDING
+    }
   }
 
   pixelPointPos(ppos: Pos): Pos {
@@ -343,12 +435,12 @@ export class PaintComponent implements AfterViewInit {
   }
 
   changePos(p: Point, ppos: Pos) {
-    p.ppos = ppos;
-    p.rpos = this.realPointPos(ppos);
+    p.pixel_pos = ppos;
+    p.evaluated_pos = this.realPointPos(ppos);
   }
 
   geometryTypeChange(change: MatButtonToggleChange) {
     this.analytical = change.value === 'analytical';
-    this.draw({x: 0, y: 0});
+    this.draw({ x: 0, y: 0 });
   }
 }
