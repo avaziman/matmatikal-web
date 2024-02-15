@@ -70,8 +70,6 @@ interface PointRef {
   styleUrl: './paint.component.css'
 })
 export class PaintComponent implements AfterViewInit {
-  @ViewChild('drawCanvas', { static: true })
-  canvas: ElementRef<HTMLCanvasElement> | undefined | null;
 
   @ViewChild('command', { static: true })
   command: ElementRef<HTMLInputElement> | undefined | null;
@@ -128,10 +126,10 @@ export class PaintComponent implements AfterViewInit {
   }
 
   newConnection(a: Point, b: Point): Connection {
-    let m = simplify('(xo - xt) / (yo - yt)', { xo: a.theoretical_pos.x, xt: b.theoretical_pos.x, yo: a.theoretical_pos.y, yt: b.theoretical_pos.y });
+    let m = simplify('(x1 - x2) / (y1 - y2)', { x1: a.theoretical_pos.x, x2: b.theoretical_pos.x, y1: a.theoretical_pos.y, y2: b.theoretical_pos.y });
 
     let func;
-    if (Math.abs(m.evaluate()) == Infinity) {
+    if (Math.abs(m.evaluate()) == Infinity)  {
       // vertical line
       func = { x: a.theoretical_pos.x };
     } else {
@@ -142,7 +140,7 @@ export class PaintComponent implements AfterViewInit {
       console.log("equation", equation.toString())
 
       func = {
-        equation: equation,
+        equation,
         m: m,
         b: b,
       };
