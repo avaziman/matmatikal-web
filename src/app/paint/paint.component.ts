@@ -90,12 +90,12 @@ export class PaintComponent implements AfterViewInit {
   mouseDown = false;
 
   ngAfterViewInit(): void {
-    if (this.canvas) {
+    // if (this.canvas) {
 
-      this.canvas.nativeElement.width = 400;
-      this.canvas.nativeElement.height = 400;
-      this.context = this.canvas.nativeElement.getContext('2d');
-    }
+    //   this.canvas.nativeElement.width = 400;
+    //   this.canvas.nativeElement.height = 400;
+    //   this.context = this.canvas.nativeElement.getContext('2d');
+    // }
 
     if (!this.context || !this.geometryType) {
       return;

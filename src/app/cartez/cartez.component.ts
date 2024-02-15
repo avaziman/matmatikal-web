@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild, AfterViewInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
@@ -9,13 +9,15 @@ import { BehaviorSubject } from 'rxjs';
   styleUrl: './cartez.component.css'
 })
 export class CartezComponent {
-  @Input() width: BehaviorSubject<number>;
-  @Input() height: BehaviorSubject<number>;
+  width!: number;
+  height!: number;
   
 
-  @ViewChild('drawCanvas', { static: true })
-  canvas: ElementRef<HTMLCanvasElement> | undefined | null;
-  
+  @ViewChild('drawCanvas')
+  canvas!: ElementRef<HTMLCanvasElement>;
+
+  context!: CanvasRenderingContext2D;
+
   onMouseMove(e: MouseEvent) {
     // this.height.
     // this.height
@@ -25,8 +27,19 @@ export class CartezComponent {
   onMouseDown(e: MouseEvent) {
   }
 
-  constructor(width: BehaviorSubject<number>, height: BehaviorSubject<number>) {
-    this.width = width;
-    this.height = height;
+  ngAfterViewInit() {
+    this.canvas.nativeElement.width =  300;
+    this.canvas.nativeElement.height = 300;
+
+    this.width = this.canvas.nativeElement.width;
+    this.height = this.canvas.nativeElement.height;
+    let ctx = this.canvas.nativeElement.getContext('2d');
+    if (ctx) { 
+      this.context = ctx;
+    }
+    console.log({ w: this.width, h: this.height });
+
+    this.context.fillStyle = "#eeeeee";
+    this.context.fillRect(0, 0, this.width, this.height);
   }
 }
