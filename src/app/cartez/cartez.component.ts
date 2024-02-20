@@ -43,8 +43,7 @@ export class CartezComponent {
   points: Point[] = [];
   // maybe separate axis
   scale: number = DEFAULT_SCALE;
-  view_pos: Pos = {x: 0, y: 0};
-  range: Pos = { x: 0, y: 0 };
+  view_pos: Pos = { x: 0, y: 0 };
 
   vertical_lines: number[] = [];
   lines: LineFx[] = [];
@@ -65,7 +64,7 @@ export class CartezComponent {
   }
 
   drawVerticalLine(x: number) {
-    this.drawLine({ x, y: this.view_pos.y }, { x, y: this.view_pos.y + this.range.y });
+    this.drawLine({ x, y: this.view_pos.y }, { x, y: this.view_pos.y + this.getRange().y });
   }
 
   drawLine(p1: Pos, p2: Pos) {
@@ -115,28 +114,31 @@ export class CartezComponent {
   onMouseDown(e: MouseEvent) {
   }
 
+  getRange(): Pos {
+    return { x: this.width / this.scale, y: this.height / this.scale };
+  }
+
   ngAfterViewInit() {
-    this.canvas.nativeElement.width = 300;
-    this.canvas.nativeElement.height = 300;
+    this.canvas.nativeElement.width = 800;
+    this.canvas.nativeElement.height = 500;
 
     this.width = this.canvas.nativeElement.width;
     this.height = this.canvas.nativeElement.height;
-
-    this.range = { x: this.width / this.scale, y: this.height / this.scale }
 
     let ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.context = ctx;
     }
-    console.log({ w: this.width, h: this.height , s: this.scale, r: this.range});
+    let range = this.getRange();
+    console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.context.fillStyle = "#eeeeee";
     this.context.fillRect(0, 0, this.width, this.height);
 
-    this.view_pos = { x: -this.range.x / 2, y: -this.range.y / 2 };
+    this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
 
     this.addVerticalLine(0);
-    this.addLine({m: 0, b: 0});
+    this.addLine({ m: 0, b: 0 });
     // this.addVerticalLine(1);
     // this.addVerticalLine(2);
     // this.addVerticalLine(-1);
@@ -147,36 +149,74 @@ export class CartezComponent {
 
   draw() {
     this.context.clearRect(0, 0, this.width, this.height);
-    
+
     for (const vl of this.vertical_lines) {
       this.drawVerticalLine(vl);
     }
 
     for (const l of this.lines) {
       let p1 = this.lineFx(l, this.view_pos.x);
-      let p2 = this.lineFx(l, this.view_pos.x + this.range.x);
+      let p2 = this.lineFx(l, this.view_pos.x + this.getRange().x);
 
       this.drawLine(p1, p2);
     }
+
+    const TEETH_PER_AXIS = 10;
+    // size is constant in pixels, not in coordinates
+    
+    const SIZE = 10 /* px */ / this.scale;
+
+    // round to the nearest multiple of TEETH
+    // 11.23 -> 10
+    // 2.3437 
+    // let roundRange = this.range.x;
+    let range = this.getRange();
+    let spaces = (range.x / TEETH_PER_AXIS);
+    let start = Math.ceil(this.view_pos.x / spaces);
+    this.context.fillStyle = "black";
+
+    for (let i = start; i < start + TEETH_PER_AXIS; i++) {
+      let x = i * spaces;
+      this.drawLine({ x, y: -SIZE }
+        , { x, y: SIZE }
+      );
+      
+      let pixelPos = this.cordToPixelPos({ x, y: SIZE });
+      this.context.fillText(x.toString(), pixelPos.x, pixelPos.y + 20);
+    }
+    start = Math.ceil(this.view_pos.y / spaces);
+    for (let i = start; i < start + TEETH_PER_AXIS; i++) {
+      let y = i * spaces;
+      this.drawLine({ x: -SIZE, y }
+        , { x: SIZE, y }
+      );
+      let pixelPos = this.cordToPixelPos({ x: SIZE, y});
+      this.context.fillText(y.toString(), pixelPos.x, pixelPos.y + 20);
+    }
   }
 
-  lineFx(line: LineFx, x: number) : Pos {
+  lineFx(line: LineFx, x: number): Pos {
     return { x, y: line.m * x + line.b };
   }
 
   @HostListener('window:wheel', ['$event']) // for window scroll events
   onWheel(e: WheelEvent) {
-    console.log(e)
-    let dy = e.deltaY;
-    const sign = dy / -Math.abs(dy);
-    const mul = sign * 0.4;
-    // this.view_pos.y += dy / Math.abs(dy);
-    // this.scale += mul * sign;
-    this.view_pos.y -= mul * (this.height / 2 - e.offsetY) / this.height;
-    this.view_pos.x -= mul * (this.width / 2 - e.offsetX) / this.width;
-    // this.view_pos.x += mul * (e.offsetX - this.width  / 2) / this.width;
-    // this.view_pos.y += mul * (this.height / 2 - e.offsetY) / this.height / 2;
-    console.log(this.view_pos)
+    // console.log(e)
+    let mouseDy = e.deltaY;
+    const sign = Math.sign(mouseDy);
+    const mul = sign * 0.5;
+
+    let dx = this.width / 2 - e.offsetX;
+    let dy = this.height / 2 - e.offsetY;
+    let last_scale = this.scale;
+
+    this.scale -= sign * 2;
+
+    this.view_pos.x *= last_scale / this.scale;
+    this.view_pos.y *= last_scale / this.scale;
+    this.view_pos.x += mul * dx / this.width;
+    this.view_pos.y += mul * dy / this.height;
+    console.table({ view: this.view_pos, scale: this.scale, range: this.getRange() })
 
     this.draw();
   }
