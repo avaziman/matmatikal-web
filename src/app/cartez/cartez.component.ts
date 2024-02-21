@@ -16,6 +16,93 @@ export interface LineFx {
   b: number;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 type Pos = PosT<number>;
 // type Line = LinearFn<number>;
 
@@ -59,7 +146,7 @@ export class CartezComponent {
   cordToPixelPos(pos: Pos): Pos {
     return {
       x: (pos.x - this.view_pos.x) * this.scale,
-      y: (pos.y - this.view_pos.y) * this.scale,
+      y: this.height - (pos.y - this.view_pos.y) * this.scale,
     }
   }
 
@@ -85,7 +172,7 @@ export class CartezComponent {
   //   this.context.strokeStyle = color;
   //   this.context.fillStyle = color;
 
-  //   this.context.ellipse(point.pixel_pos.x, point.pixel_pos.y, radius, radius, 0, 0, 2 * Math.PI);
+  //   this.context.ellipse(point.x, point.pixel_pos.y, radius, radius, 0, 0, 2 * Math.PI);
   //   this.context.fill();
 
   //   this.context.lineWidth = 2;
@@ -199,9 +286,11 @@ export class CartezComponent {
     return { x, y: line.m * x + line.b };
   }
 
-  @HostListener('window:wheel', ['$event']) // for window scroll events
+
   onWheel(e: WheelEvent) {
+    e.preventDefault();
     // console.log(e)
+
     let mouseDy = e.deltaY;
     const sign = Math.sign(mouseDy);
     const mul = sign * 0.5;

@@ -1,3 +1,5 @@
 <p>Cartez!</p>
-<canvas #drawCanvas (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)"
+<div (mousedown)="onMouseDown($event)" (wheel)="onWheel($event)">
+<canvas #drawCanvas  (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" 
     oncontextmenu="return false;" >Fail</canvas>
+</div>

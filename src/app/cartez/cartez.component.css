@@ -1,0 +1,5 @@
+canvas {
+    touch-action: none;
+    -ms-content-zoomin: none;
+    pointer-events: none;
+}
