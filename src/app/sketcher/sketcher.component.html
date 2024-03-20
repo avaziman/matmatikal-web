@@ -1,0 +1,25 @@
+<app-cartez (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)"
+    oncontextmenu="return false;"></app-cartez>
+<mat-card>
+    <mat-card-title>Points</mat-card-title>
+    <ul>
+        @for (item of this.cartez.points; track item.letter) {
+        <li>
+            {{item.letter}} ({{item.cords.x}},{{item.cords.y}})
+        </li>
+        }
+    </ul>
+</mat-card>
+<mat-card>
+    <mat-card-title>Lines</mat-card-title>
+    <ul>
+        @for (line of this.cartez.lines | slice:1; track line.id) {
+        <li>
+            y = {{line.m}}x {{['-','+'][+(line.b > 0)] + " " + myMath.abs(line.b)}}
+            @for (range of line.ranges; track range) {
+                {{ "{" + range.from + " <= x <= " + range.to  + "}"}}
+            }
+        </li>
+        }
+    </ul>
+</mat-card>

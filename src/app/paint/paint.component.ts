@@ -27,11 +27,6 @@
 // }
 
 
-// interface Connection {
-//   a: Point,
-//   b: Point,
-//   equation: LineT
-// }
 
 // function makeLetterIterator() {
 //   let letter = 'A';
@@ -47,10 +42,6 @@
 //   return letterIterator;
 // }
 
-// interface PointRef {
-//   p: Point,
-//   index: number,
-// }
 
 // @Component({
 //   selector: 'app-paint',
@@ -159,46 +150,6 @@
 //     console.log("Got command", this.command?.nativeElement.value)
 //   }
 
-//   distWithin(p1: Pos, p2: Pos, d: number): boolean {
-//     let dx = Math.abs(p1.x - p2.x);
-//     if (dx > TOGGLE_DIST) return false;
-//     let dy = Math.abs(p1.y - p2.y);
-//     if (dy > TOGGLE_DIST) return false;
-
-//     let dist = Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
-//     if (dist > d) return false;
-
-//     return true;
-//   }
-
-//   onMouseMove(e: MouseEvent) {
-//     if (!this.context) {
-//       return;
-//     }
-//     // console.log("mousedown", this.mouseDown);
-
-//     let x = e.offsetX;
-//     let y = e.offsetY;
-//     let mousePos = { x, y };
-
-//     this.hovered = undefined;
-
-//     for (const point of this.points) {
-//       if (this.toggled && this.toggled.p === point) { continue; }
-
-//       if (this.distWithin(mousePos, point.pixel_pos, TOGGLE_DIST)) {
-//         this.hovered = point;
-//         break;
-//       }
-//     }
-
-//     // y - y1 = -m(x - x1) => y = -mx + mx1 + y1
-
-//     // find dist
-//     // -mx + mx1 + y1 = mx + b
-//     // 2mx + b = mx1 + y1
-//     // x = (mx1 + y1 - b) / 2m
-
 //     // point on line, no mathematical importance
 //     for (const connection of this.connections) {
 //       // perpendicular
@@ -213,15 +164,7 @@
 
 //         let pos = { x: perpX, y: perpY };
 
-//         if (this.distWithin(pos, this.realPointPos(mousePos), TOGGLE_DIST * 2)) {
-//           this.hovered = {
-//             pixel_pos: this.pixelPointPos(pos),
-//             evaluated_pos: pos,
-//             theoretical_pos: { x: new ConstantNode(0), y: new ConstantNode(0) },
-//             letter: this.letterIt.next().value
-//           };
-//           console.log("OVER")
-//         }
+
 //       }
 //     }
 
@@ -270,43 +213,7 @@
 //     this.mouseDown = false;
 //   }
 
-//   onMouseDown(e: MouseEvent) {
 
-//     if (e.button === 2) {
-//       this.toggled = undefined;
-//       this.draw({ x: 0, y: 0 });
-//       return;
-//     }
-
-//     let ppos = { x: e.offsetX, y: e.offsetY };
-//     let evaluated_pos = this.realPointPos(ppos);
-
-//     let point = {
-//       pixel_pos: ppos,
-//       evaluated_pos: evaluated_pos,
-//       theoretical_pos: { x: new ConstantNode(evaluated_pos.x), y: new ConstantNode(evaluated_pos.y) },
-//       letter: this.letterIt.next().value
-//     };
-//     console.log(this.hovered);
-
-//     if (!this.context) {
-//       return;
-//     }
-
-//     if (this.hovered !== undefined) {
-//       // two points
-//       if (this.toggled !== undefined && this.hovered !== this.toggled.p) {
-//         this.addConnection(this.toggled.p, this.hovered);
-//       }
-
-//       this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered) };
-//       this.onMouseMove(e);
-
-//     } else {
-//       this.points.push(point);
-//       this.onMouseMove(e);
-//       this.onMouseDown(e);
-//     }
 
 //     this.draw(point.pixel_pos);
 //     this.mouseDown = true;
