@@ -112,14 +112,14 @@ export class SketcherComponent {
 
       this.hovered = undefined;
 
-      for (const point of this.cartez.points) {
-        if (this.toggled && this.toggled.p === point) { continue; }
+      // for (const point of this.cartez.points) {
+      //   // if (this.toggled && this.toggled.p === point) { continue; }
 
-        if (this.distWithin(this.cartez.pixelPosToCord(mousePos), point.cords, TOGGLE_DIST)) {
-          this.hovered = point;
-          break;
-        }
-      }
+      //   if (this.distWithin(this.cartez.pixelPosToCord(mousePos), point.cords, TOGGLE_DIST)) {
+      //     this.hovered = point;
+      //     break;
+      //   }
+      // }
     }
   
     distWithin(p1: Pos, p2: Pos, d: number): boolean {

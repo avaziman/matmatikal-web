@@ -215,7 +215,7 @@ export class CartezComponent {
     const TEETH_PER_AXIS = 10;
     // size is constant in pixels, not in coordinates
 
-    const SIZE = 10 /* px */ / this.scale;
+    const SIZE = 5 /* px */ / this.scale;
 
     let range = this.getRange();
     this.context.fillStyle = "black";
@@ -249,6 +249,41 @@ export class CartezComponent {
       let pixelPos = this.cordToPixelPos({ x: SIZE, y });
       this.context.fillText(this.shortNum(y), pixelPos.x + 10, pixelPos.y + 5);
     }
+
+    this.context.beginPath();
+    const MAX_Y = this.view_pos.y + this.getRange().y;
+    const MIN_Y = this.view_pos.y;
+    let out_of_range = null;
+    for (let i = 0; i < this.width; i+= 1) {
+      const x = this.pixelPosToCord({ x: i, y: 0 }).x;
+      let y = x**2;
+
+      let oor = null;
+      if (y > MAX_Y) {
+        y = MAX_Y;
+        oor = MAX_Y;
+      } else if (y < MIN_Y) {
+        y = MIN_Y;
+        oor = MIN_Y;
+      }
+
+      const ppos = this.cordToPixelPos({ x, y });
+
+      if (out_of_range) {
+        if (oor === out_of_range) {
+          // not connected, starts new seq
+          this.context.moveTo(ppos.x, ppos.y)
+
+          continue;
+        } 
+      }
+      out_of_range = oor;
+      this.context.lineTo(ppos.x, ppos.y);
+      this.context.moveTo(ppos.x, ppos.y);
+    }
+    this.context.closePath();
+
+    this.context.stroke();
   }
 
   shortNum(n: number): string {
