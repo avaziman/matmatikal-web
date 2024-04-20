@@ -1,5 +1,40 @@
 header {
     background-color: #191919;
-    color: #2dc12b;
+    color: #106ac9;
     font-family: sans-serif;
+}
+
+h1 {
+    font-weight: bold;
+    margin: 0;
+}
+
+h3{
+    font-size: larger;
+    font-weight: bolder;
+    margin: 0;
+}
+
+ul {
+    height: 3rem;
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    flex-direction: row;
+    gap: 2rem;
+    list-style-type: none;
+    margin: 0 1.5rem;
+}
+
+li * {
+    height: 100%;
+        text-decoration: none;
+    margin: auto 0;
+}
+
+li {
+    cursor: pointer;
+    display:flex;
+    gap: 0.1rem;
+    flex-direction: row;
 }

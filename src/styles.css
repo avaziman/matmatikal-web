@@ -4,4 +4,7 @@
     margin: 0;
 }
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { font-family: Roboto, "Helvetica Neue", sans-serif; 
+
+
+background-color: rgb(93, 93, 93);}

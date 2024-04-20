@@ -1,5 +1,9 @@
-<app-cartez (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)"
-    oncontextmenu="return false;"></app-cartez>
+<app-cartez (onCord)="onCord($event)" (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)"
+    (mousemove)="onMouseMove($event)" oncontextmenu="return false;"></app-cartez>
+@if (hoverCord) {
+<a>Selected Cord: ({{hoverCord.x}},{{hoverCord.y}})
+</a>
+}
 <mat-card>
     <mat-card-title>Points</mat-card-title>
     <ul>
@@ -17,9 +21,7 @@
         <li>
             y = {{line.m}}x {{['-','+'][+(line.b > 0)] + " " + myMath.abs(line.b)}}
             @for (range of line.ranges; track range) {
-                {{ "{" + range.from + " <= x <= " + range.to  + "}"}}
-            }
-        </li>
-        }
+            {{ "{" + range.from + " <= x <=" + range.to  + " }"}} } </li>
+                }
     </ul>
 </mat-card>

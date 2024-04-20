@@ -26,7 +26,7 @@ function makeLetterIterator() {
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
-  
+
 // interface Connection {
 //   a: Point,
 //   b: Point,
@@ -34,17 +34,27 @@ function makeLetterIterator() {
 // }
 export class SketcherComponent {
   letterIt = makeLetterIterator();
-    // connections: Connection[] = [];
+  // connections: Connection[] = [];
   lines: string[] = [];
   hovered?: Point;
   toggled?: Point;
+  hoverCord?: Pos;
   analytical: boolean = false;
   mouseDown = false;
-  
+
   @ViewChild(CartezComponent, { static: true })
   cartez!: CartezComponent;
   public myMath = Math;
 
+  onCord(cords: Pos) {
+    // console.log(cord) 
+    // round for pretty numbers
+    cords = {
+      x: Math.round(cords.x * 100) / 100, y: Math.round(cords.y * 100) / 100
+    };
+
+    this.hoverCord = cords;
+  }
   onMouseDown(e: MouseEvent) {
 
     if (e.button !== 2) {
@@ -61,16 +71,12 @@ export class SketcherComponent {
     //   // this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered) };
     //   this.onMouseMove(e);
     // } else {
-      // this.points.push(point);
-      let x = e.offsetX;
-      let y = e.offsetY;
-      let mousePos = { x, y };
-      let letter = this.letterIt.next().value;
-      this.cartez.addPointPx(mousePos,letter);
-    //   this.hovered = letter;
-    //   this.onMouseMove(e);
-    //   this.onMouseDown(e);
-    // }
+    // this.points.push(point);
+
+    if (!this.hoverCord) { return; }
+
+    let letter = this.letterIt.next().value;
+    this.cartez.addPointCords(this.hoverCord, letter);
   }
 
   onMouseUp(_e: MouseEvent) {
@@ -104,33 +110,13 @@ export class SketcherComponent {
 
 
   onMouseMove(e: MouseEvent) {
-      // console.log("mousedown", this.mouseDown);
 
-      let x = e.offsetX;
-      let y = e.offsetY;
-      let mousePos = { x, y };
+    let x = e.offsetX;
+    let y = e.offsetY;
+    let mousePos = { x, y };
 
-      this.hovered = undefined;
+    this.hovered = undefined;
 
-      // for (const point of this.cartez.points) {
-      //   // if (this.toggled && this.toggled.p === point) { continue; }
+  }
 
-      //   if (this.distWithin(this.cartez.pixelPosToCord(mousePos), point.cords, TOGGLE_DIST)) {
-      //     this.hovered = point;
-      //     break;
-      //   }
-      // }
-    }
-  
-    distWithin(p1: Pos, p2: Pos, d: number): boolean {
-      let dx = Math.abs(p1.x - p2.x);
-      if (dx > d) return false;
-      let dy = Math.abs(p1.y - p2.y);
-      if (dy > d) return false;
-
-      let dist = Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
-      if (dist > d) return false;
-
-      return true;
-    }
 }

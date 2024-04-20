@@ -10,6 +10,7 @@ import { RouterModule } from '@angular/router';
   styleUrl: './header.component.css'
 })
 export class HeaderComponent {
-  items = [{ path: 'login', text: "Login" },
-  { path: 'paint', text: "Paint" }]
+  items =
+    [{ path: 'login', text: "Login" , icon: "login"},
+  { path: 'sketch', text: "Sketch" , icon: "architecture"}]
 }
