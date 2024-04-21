@@ -1,0 +1,10 @@
+mat-card {
+    width: 20rem;
+    margin: auto;
+    padding: 2rem 2rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
