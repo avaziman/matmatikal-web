@@ -9,10 +9,13 @@ h1 {
     margin: 0;
 }
 
-h3{
+button {
     font-size: larger;
     font-weight: bolder;
     margin: 0;
+    /* height: 100%; */
+    /* display:flex;
+    flex-direction: row; */
 }
 
 ul {
@@ -28,13 +31,10 @@ ul {
 
 li * {
     height: 100%;
-        text-decoration: none;
+    text-decoration: none;
     margin: auto 0;
 }
 
 li {
-    cursor: pointer;
-    display:flex;
     gap: 0.1rem;
-    flex-direction: row;
-}
+    }
