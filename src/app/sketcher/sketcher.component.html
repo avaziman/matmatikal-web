@@ -1,9 +1,28 @@
-<app-cartez (onCord)="onCord($event)" (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)"
-    (mousemove)="onMouseMove($event)" oncontextmenu="return false;"></app-cartez>
+<app-cartez (onCord)="onCord($event)" (onHover)="onHover($event)" (mousedown)="onMouseDown($event)"
+    (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" oncontextmenu="return false;"></app-cartez>
 @if (hoverCord) {
 <a>Selected Cord: ({{hoverCord.x}},{{hoverCord.y}})
 </a>
 }
+@if (hovered) {
+<a>Selected Point: ({{hovered.letter}})
+</a>
+}
+<mat-card>
+    <mat-card-title>Functions</mat-card-title>
+    <div>
+        <input matInput placeholder="f(x)" value="" (keyup)="onFnChange($event)">
+        <!-- <button mat-button color="primary"> Add</button> -->
+    </div>
+
+    <ul>
+        @for (fn of this.cartez.functions; track fn.expression) {
+        <li>
+            {{fn.expression.to_latex()}}
+        </li>
+        }
+    </ul>
+</mat-card>
 <mat-card>
     <mat-card-title>Points</mat-card-title>
     <ul>

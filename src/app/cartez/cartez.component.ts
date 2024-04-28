@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 // import { Line } from '../logic/line';
-import math from 'mathjs';
+import * as wasm from "algebrars";
 
 const DEFAULT_SCALE = 10;
 
@@ -45,19 +45,22 @@ export class CartezComponent {
 
 
   @Output() onCord = new EventEmitter<Pos>();
+  @Output() onHover = new EventEmitter<Point | undefined>();
 
   @ViewChild('drawCanvas')
   canvas!: ElementRef<HTMLCanvasElement>;
   context!: CanvasRenderingContext2D;
 
   points: Point[] = [];
-  // hovered?: Point;
+  hovered?: Point;
+  selected?: Point;
   // maybe separate axis
   scale: number = DEFAULT_SCALE;
   view_pos: Pos = { x: 0, y: 0 };
 
   vertical_lines: number[] = [];
   lines: LineFx[] = [];
+  functions: wasm.Function[] = []
 
   addPointCords(cords: Pos, letter: string) {
     // round for simplicity
@@ -84,6 +87,16 @@ export class CartezComponent {
 
   addLine(line: LineFx) {
     this.lines.push(line);
+  }
+
+  addFunction(expr: string) {
+    console.log("adding func", expr)
+    const tree = wasm.MathTree.parse(expr);
+    console.log("added func", tree.to_latex());
+    // this.functions.push(
+    //   wasm.Function.from(tree)
+    // )
+    this.draw();
   }
 
   addVerticalLine(x: number) {
@@ -251,7 +264,11 @@ export class CartezComponent {
     for (const p of this.points) {
       const POINT_SIZE = 5;
 
+      if (p === this.hovered) {
+        this.drawPoint(p, POINT_SIZE + 4, 'aqua');
+      }
       this.drawPoint(p, POINT_SIZE, 'black');
+
     }
 
     this.context.fillStyle = "black";
@@ -345,18 +362,14 @@ export class CartezComponent {
     let cords = this.pixelPosToCord(ppos);
     this.onCord.emit(cords);
 
-    for (const point of this.points) {
-      // if (this.toggled && this.toggled.p === point) { continue; }
-
-
-      const TOGGLE_DIST_PX = 10;
-      if (this.distWithin(cords, point.cords, TOGGLE_DIST_PX / this.scale)) {
-        // this.hovered = point;
-        // console.log("HOVERED", point)
-        break;
-      }
+    const TOGGLE_DIST_PX = 10;
+    let hovered = this.points.find((p) => this.distWithin(cords, p.cords, TOGGLE_DIST_PX / this.scale));
+    // console.log("A", hovered)
+    if (this.hovered != hovered) {
+      this.onHover.emit(hovered);
+      this.hovered = hovered;
+      this.draw();
     }
-
 
     if (~e.buttons & 1) {
       return;
@@ -378,9 +391,7 @@ export class CartezComponent {
     if (dy > d) return false;
 
     let dist = Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
-    if (dist > d) return false;
-
-    return true;
+    return dist < d;
   }
 
 }

@@ -20,23 +20,29 @@
     "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "@angular/router": "^17.0.0",
+    "algebrars": "file:../../Projects/algebrars/pkg",
     "mathjs": "^12.3.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^17.0.5",
+    "@angular-builders/custom-webpack": "^17.0.2",
+    "@angular-devkit/build-angular": "^17.3.6",
     "@angular/cli": "^17.0.5",
     "@angular/compiler-cli": "^17.0.0",
     "@types/algebra.js": "^0.2.4",
     "@types/jasmine": "~5.1.0",
+    "@wasm-tool/wasm-pack-plugin": "^1.7.0",
+    "i": "^0.3.7",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.2.2"
+    "typescript": "~5.2.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2"
   }
 }

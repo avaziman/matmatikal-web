@@ -2,7 +2,8 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CartezComponent, Point, Pos } from '../cartez/cartez.component';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
-
+import {MatInputModule} from '@angular/material/input';
+import * as wasm from "algebrars";
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -22,7 +23,7 @@ function makeLetterIterator() {
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
@@ -41,11 +42,14 @@ export class SketcherComponent {
   hoverCord?: Pos;
   analytical: boolean = false;
   mouseDown = false;
-
+  
   @ViewChild(CartezComponent, { static: true })
   cartez!: CartezComponent;
   public myMath = Math;
-
+  
+  onFnChange(s: any) {
+    this.cartez.addFunction(s.target.value)
+  }
   onCord(cords: Pos) {
     // console.log(cord) 
     // round for pretty numbers
@@ -53,8 +57,23 @@ export class SketcherComponent {
       x: Math.round(cords.x * 100) / 100, y: Math.round(cords.y * 100) / 100
     };
 
+    let fn = wasm.Function.from(wasm.MathTree.parse("x^2"));
+    let res = fn.evaluate(wasm.TreeNodeRef.one());
+
+    if (res) {
+      let val = res.val(); 
+      console.log(val);
+      if (val.constant) {
+        console.log(val.constant.toNumber())
+      }
+   } 
     this.hoverCord = cords;
   }
+  
+  onHover(point: Point | undefined) {
+    this.hovered = point;
+  }
+
   onMouseDown(e: MouseEvent) {
 
     if (e.button !== 2) {
@@ -105,7 +124,7 @@ export class SketcherComponent {
       //   this.toggled = undefined;
       // }
       this.mouseDown = false;
-    }
+    } 
   }
 
 
@@ -115,7 +134,7 @@ export class SketcherComponent {
     let y = e.offsetY;
     let mousePos = { x, y };
 
-    this.hovered = undefined;
+    // this.hovered = undefined;
 
   }
 

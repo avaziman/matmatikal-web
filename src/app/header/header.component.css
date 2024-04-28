@@ -5,23 +5,21 @@ header {
 }
 
 h1 {
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: 600;
     margin: 0;
 }
 
 button {
     font-size: larger;
     font-weight: bolder;
-    margin: 0;
-    /* height: 100%; */
-    /* display:flex;
-    flex-direction: row; */
+    height: 100%;
+    margin: auto 0;
 }
 
 ul {
     height: 3rem;
     display: flex;
-    /* justify-content: center; */
     align-items: center;
     flex-direction: row;
     gap: 2rem;
@@ -29,12 +27,7 @@ ul {
     margin: 0 1.5rem;
 }
 
-li * {
-    height: 100%;
-    text-decoration: none;
-    margin: auto 0;
-}
-
 li {
+    height: 100%;
     gap: 0.1rem;
-    }
+}

@@ -1,10 +1,14 @@
 <header>
     <ul>
         <li routerLink='/'>
-            <h1>M&#x2200;TM&#x2200;IKAL</h1>
+            <button mat-button color="primary">
+                    <h1>
+                    M&#x2200;TM&#x2200;IKAL
+                </h1>
+                </button>
         </li>
         <li *ngFor="let item of items" [routerLink]="item.path">
-            <button mat-icon-button color="primary" [title]="item.text"> {{item.text}}
+            <button mat-button color="primary" [title]="item.text"> {{item.text}}
                 <!-- <span class="material-symbols-outlined">
                 {{item.icon}}
             </span> -->
