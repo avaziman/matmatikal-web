@@ -264,6 +264,7 @@ export class CartezComponent {
   }
 
   draw() {
+    console.time("draw");
     this.context.clearRect(0, 0, this.width, this.height);
 
     for (const vl of this.vertical_lines) {
@@ -302,10 +303,11 @@ export class CartezComponent {
     for (const fn of this.functions) {
       this.drawFunction(fn.fn);
     }
+    console.timeEnd("draw");
   }
 
   drawFunction(f: wasm.Function) {
-    // if ()
+    console.time("draw fn");
 
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
@@ -322,8 +324,6 @@ export class CartezComponent {
           y = val.constant.toNumber();
         }
       } catch {
-        console.log({ x });
-
       }
 
       if (y == undefined) {
@@ -358,6 +358,7 @@ export class CartezComponent {
     // this.context.strokeStyle = "#2979ff";
     this.context.strokeStyle = PRIMARY_COLOR;
     this.context.stroke();
+    console.timeEnd("draw fn");
   }
   shortNum(n: number): string {
     let res = n.toString();
