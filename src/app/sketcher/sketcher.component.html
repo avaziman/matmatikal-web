@@ -16,9 +16,9 @@
     </div>
 
     <ul>
-        @for (fn of this.cartez.functions; track fn.expression) {
+        @for (fn of this.cartez.functions; track fn) {
         <li>
-            {{fn.expression.to_latex()}}
+            {{fn.expression_latex}}
         </li>
         }
     </ul>

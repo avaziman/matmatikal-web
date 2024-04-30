@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import * as wasm from "algebrars";
 
 const DEFAULT_SCALE = 10;
+const PRIMARY_COLOR = "#2196f3";
 
 interface PosT<T> {
   x: T,
@@ -31,6 +32,11 @@ export interface Point {
   cords: Pos,
 }
 
+interface FunctionWrapper {
+  fn: wasm.Function,
+  expression_latex: string,
+}
+
 @Component({
   selector: 'app-cartez',
   standalone: true,
@@ -53,6 +59,7 @@ export class CartezComponent {
 
   points: Point[] = [];
   hovered?: Point;
+  // toggled
   selected?: Point;
   // maybe separate axis
   scale: number = DEFAULT_SCALE;
@@ -60,18 +67,31 @@ export class CartezComponent {
 
   vertical_lines: number[] = [];
   lines: LineFx[] = [];
-  functions: wasm.Function[] = []
+  functions: FunctionWrapper[] = []
 
   addPointCords(cords: Pos, letter: string) {
-    // round for simplicity
-    this.points.push({
-      letter: letter,
-      cords: { x: cords.x, y: cords.y }
-    })
+
+    let point = undefined;
+    let last_point = undefined;
+    if (!this.hovered) {
+      let p = {
+        letter: letter,
+        cords: { x: cords.x, y: cords.y }
+      };
+      this.points.push(p);
+      point = p;
+      last_point = this.points.at(-2) as Point;
+    } else {
+      point = this.hovered;
+      last_point = this.points.at(-1) as Point;
+    }
+
+    if (this.selected) {
+      last_point = this.selected;
+    }
+
 
     if (this.points.length > 1) {
-      const last_point = this.points[this.points.length - 2];
-      const point = this.points[this.points.length - 1];
       const m = (point.cords.y - last_point.cords.y) / (point.cords.x - last_point.cords.x);
 
       this.addLine({
@@ -90,12 +110,15 @@ export class CartezComponent {
   }
 
   addFunction(expr: string) {
-    console.log("adding func", expr)
     const tree = wasm.MathTree.parse(expr);
+
     console.log("added func", tree.to_latex());
-    // this.functions.push(
-    //   wasm.Function.from(tree)
-    // )
+
+    const fn = wasm.Function.from(tree);
+    this.functions = []
+    this.functions.push(
+      { fn, expression_latex: expr }
+    )
     this.draw();
   }
 
@@ -264,8 +287,8 @@ export class CartezComponent {
     for (const p of this.points) {
       const POINT_SIZE = 5;
 
-      if (p === this.hovered) {
-        this.drawPoint(p, POINT_SIZE + 4, 'aqua');
+      if (p === this.hovered || p == this.selected) {
+        this.drawPoint(p, POINT_SIZE + 4, PRIMARY_COLOR);
       }
       this.drawPoint(p, POINT_SIZE, 'black');
 
@@ -275,17 +298,34 @@ export class CartezComponent {
 
     this.drawTeeth();
 
-    this.drawFunction();
+    for (const fn of this.functions) {
+      this.drawFunction(fn.fn);
+    }
   }
 
-  drawFunction() {
+  drawFunction(f: wasm.Function) {
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
     const MIN_Y = this.view_pos.y;
     let out_of_range = null;
     for (let i = 0; i < this.width; i += 1) {
       const x = this.pixelPosToCord({ x: i, y: 0 }).x;
-      let y = x ** 2;
+      let y = undefined;
+      try {
+        let evaluated = f.evaluate(wasm.TreeNodeRef.constant(wasm.Decimal.fromNumber(x) as wasm.Decimal));
+        let val = evaluated?.val();
+        if (val?.constant) {
+          // continue
+          y = val.constant.toNumber();
+        }
+      } catch {
+        console.log({ x });
+
+      }
+
+      if (y == undefined) {
+        continue;
+      }
 
       let oor = null;
       if (y > MAX_Y) {
@@ -312,9 +352,10 @@ export class CartezComponent {
     }
     this.context.closePath();
 
+    // this.context.strokeStyle = "#2979ff";
+    this.context.strokeStyle = PRIMARY_COLOR;
     this.context.stroke();
   }
-
   shortNum(n: number): string {
     let res = n.toString();
 
@@ -328,6 +369,10 @@ export class CartezComponent {
 
   lineFx(line: LineFx, x: number): Pos {
     return { x, y: line.m * x + line.b };
+  }
+
+  togglePoint(p?: Point) { 
+    this.selected = p;
   }
 
 

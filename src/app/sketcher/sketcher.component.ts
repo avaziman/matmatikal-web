@@ -53,20 +53,11 @@ export class SketcherComponent {
   onCord(cords: Pos) {
     // console.log(cord) 
     // round for pretty numbers
+
     cords = {
       x: Math.round(cords.x * 100) / 100, y: Math.round(cords.y * 100) / 100
     };
 
-    let fn = wasm.Function.from(wasm.MathTree.parse("x^2"));
-    let res = fn.evaluate(wasm.TreeNodeRef.one());
-
-    if (res) {
-      let val = res.val(); 
-      console.log(val);
-      if (val.constant) {
-        console.log(val.constant.toNumber())
-      }
-   } 
     this.hoverCord = cords;
   }
   
@@ -76,26 +67,26 @@ export class SketcherComponent {
 
   onMouseDown(e: MouseEvent) {
 
+    // left click 
+    if (e.button === 0) {
+      // if (this.hovered) {
+      // check hovered
+        this.cartez.togglePoint(this.hovered);
+      // }
+    }
+
+    // right click
     if (e.button !== 2) {
       // this.toggled = undefined;
       return;
     }
 
-    // if (this.hovered !== undefined) {
-    //   // two points
-    //   if (this.toggled !== undefined && this.hovered !== this.toggled) {
-    //     // this.cartez.addLine(this.toggled.p, this.hovered);
-    //   }
-
-    //   // this.toggled = { p: this.hovered, index: this.points.indexOf(this.hovered) };
-    //   this.onMouseMove(e);
-    // } else {
-    // this.points.push(point);
 
     if (!this.hoverCord) { return; }
 
     let letter = this.letterIt.next().value;
     this.cartez.addPointCords(this.hoverCord, letter);
+    this.cartez.togglePoint();
   }
 
   onMouseUp(_e: MouseEvent) {
