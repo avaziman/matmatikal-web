@@ -34,6 +34,7 @@ export interface Point {
 
 interface FunctionWrapper {
   fn: wasm.Function,
+  values: number[],
   expression_latex: string,
 }
 
@@ -117,7 +118,7 @@ export class CartezComponent {
     const fn = wasm.Function.from(tree);
     this.functions = []
     this.functions.push(
-      { fn, expression_latex: expr }
+      { fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
     )
     this.draw();
   }
@@ -304,6 +305,8 @@ export class CartezComponent {
   }
 
   drawFunction(f: wasm.Function) {
+    // if ()
+
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
     const MIN_Y = this.view_pos.y;
