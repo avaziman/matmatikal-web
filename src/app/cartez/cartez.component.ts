@@ -34,6 +34,7 @@ export interface Point {
 
 interface FunctionWrapper {
   fn: wasm.Function,
+  fast_fn: wasm.FastFunction,
   values: number[],
   expression_latex: string,
 }
@@ -116,9 +117,11 @@ export class CartezComponent {
     console.log("added func", tree.to_latex());
 
     const fn = wasm.Function.from(tree);
+    const fast_fn = wasm.FastFunction.from(fn);
+
     this.functions = []
     this.functions.push(
-      { fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
+      { fn, fast_fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
     )
     this.draw();
   }
@@ -301,12 +304,12 @@ export class CartezComponent {
     this.drawTeeth();
 
     for (const fn of this.functions) {
-      this.drawFunction(fn.fn);
+      this.drawFunction(fn.fast_fn);
     }
     console.timeEnd("draw");
   }
 
-  drawFunction(f: wasm.Function) {
+  drawFunction(f: wasm.FastFunction) {
     console.time("draw fn");
 
     this.context.beginPath();
@@ -317,12 +320,8 @@ export class CartezComponent {
       const x = this.pixelPosToCord({ x: i, y: 0 }).x;
       let y = undefined;
       try {
-        let evaluated = f.evaluate(wasm.TreeNodeRef.constant(wasm.Decimal.fromNumber(x) as wasm.Decimal));
-        let val = evaluated?.val();
-        if (val?.constant) {
-          // continue
-          y = val.constant.toNumber();
-        }
+        let evaluated = f.evaluate_float([wasm.VariableVal.new("x", x)]);
+        y = evaluated;
       } catch {
       }
 
@@ -375,7 +374,7 @@ export class CartezComponent {
     return { x, y: line.m * x + line.b };
   }
 
-  togglePoint(p?: Point) { 
+  togglePoint(p?: Point) {
     this.selected = p;
   }
 
