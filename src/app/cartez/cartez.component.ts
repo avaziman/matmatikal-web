@@ -5,6 +5,8 @@ import * as wasm from "algebrars";
 
 const DEFAULT_SCALE = 10;
 const PRIMARY_COLOR = "#2196f3";
+const TOGGLE_POINT_DIST_PX = 10;
+const TOGGLE_DIST_FN_PX = 5;
 
 interface PosT<T> {
   x: T,
@@ -35,7 +37,7 @@ export interface Point {
 interface FunctionWrapper {
   fn: wasm.Function,
   fast_fn: wasm.FastFunction,
-  values: number[],
+  values: Array<number | undefined>,
   expression_latex: string,
 }
 
@@ -60,7 +62,8 @@ export class CartezComponent {
   context!: CanvasRenderingContext2D;
 
   points: Point[] = [];
-  hovered?: Point;
+  hoveredPoint?: Point;
+  hoveredFunction?: FunctionWrapper;
   // toggled
   selected?: Point;
   // maybe separate axis
@@ -75,7 +78,7 @@ export class CartezComponent {
 
     let point = undefined;
     let last_point = undefined;
-    if (!this.hovered) {
+    if (!this.hoveredPoint) {
       let p = {
         letter: letter,
         cords: { x: cords.x, y: cords.y }
@@ -84,7 +87,7 @@ export class CartezComponent {
       point = p;
       last_point = this.points.at(-2) as Point;
     } else {
-      point = this.hovered;
+      point = this.hoveredPoint;
       last_point = this.points.at(-1) as Point;
     }
 
@@ -112,18 +115,23 @@ export class CartezComponent {
   }
 
   addFunction(expr: string) {
-    const tree = wasm.MathTree.parse(expr);
 
-    console.log("added func", tree.to_latex());
 
-    const fn = wasm.Function.from(tree);
-    const fast_fn = wasm.FastFunction.from(fn);
+    try {
+      const tree = wasm.MathTree.parse(expr);
+      console.log("added func", tree.to_latex());
 
-    this.functions = []
-    this.functions.push(
-      { fn, fast_fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
-    )
-    this.draw();
+      const fn = wasm.Function.from(tree);
+      const fast_fn = wasm.FastFunction.from(expr);
+
+      this.functions = []
+      this.functions.push(
+        { fn, fast_fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
+      )
+      this.draw();
+    } catch {
+      console.log("Failed to parse func: ", expr)
+    }
   }
 
   addVerticalLine(x: number) {
@@ -292,7 +300,7 @@ export class CartezComponent {
     for (const p of this.points) {
       const POINT_SIZE = 5;
 
-      if (p === this.hovered || p == this.selected) {
+      if (p === this.hoveredPoint || p == this.selected) {
         this.drawPoint(p, POINT_SIZE + 4, PRIMARY_COLOR);
       }
       this.drawPoint(p, POINT_SIZE, 'black');
@@ -304,26 +312,33 @@ export class CartezComponent {
     this.drawTeeth();
 
     for (const fn of this.functions) {
-      this.drawFunction(fn.fast_fn);
+      this.drawFunction(fn);
     }
     console.timeEnd("draw");
   }
 
-  drawFunction(f: wasm.FastFunction) {
+  drawFunction(f: FunctionWrapper) {
     console.time("draw fn");
+
+    for (let i = 0; i < this.width; i += 1) {
+      const x = this.pixelPosToCord({ x: i, y: 0 }).x;
+      try {
+        let evaluated = f.fast_fn.evaluate_float([wasm.VariableVal.new("x", x)]);
+        f.values[i] = evaluated;
+        // console.log({x, y})
+      } catch {
+        f.values[i] = undefined;
+      }
+    }
+
 
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
     const MIN_Y = this.view_pos.y;
+
     let out_of_range = null;
     for (let i = 0; i < this.width; i += 1) {
-      const x = this.pixelPosToCord({ x: i, y: 0 }).x;
-      let y = undefined;
-      try {
-        let evaluated = f.evaluate_float([wasm.VariableVal.new("x", x)]);
-        y = evaluated;
-      } catch {
-      }
+      let y = f.values[i];
 
       if (y == undefined) {
         continue;
@@ -338,7 +353,7 @@ export class CartezComponent {
         oor = MIN_Y;
       }
 
-      const ppos = this.cordToPixelPos({ x, y });
+      const ppos = { x: i, y: this.cordToPixelPos({ x: 0, y }).y };
 
       if (out_of_range) {
         if (oor === out_of_range) {
@@ -354,6 +369,11 @@ export class CartezComponent {
     }
     this.context.closePath();
 
+    if (this.hoveredFunction === f) {
+      this.context.lineWidth = 2;
+    } else {
+      this.context.lineWidth = 1;
+    }
     // this.context.strokeStyle = "#2979ff";
     this.context.strokeStyle = PRIMARY_COLOR;
     this.context.stroke();
@@ -410,12 +430,31 @@ export class CartezComponent {
     let cords = this.pixelPosToCord(ppos);
     this.onCord.emit(cords);
 
-    const TOGGLE_DIST_PX = 10;
-    let hovered = this.points.find((p) => this.distWithin(cords, p.cords, TOGGLE_DIST_PX / this.scale));
-    // console.log("A", hovered)
-    if (this.hovered != hovered) {
-      this.onHover.emit(hovered);
-      this.hovered = hovered;
+    let hoveredPoint = this.points.find((p) => this.distWithin(cords, p.cords, TOGGLE_POINT_DIST_PX / this.scale));
+    if (this.hoveredPoint != hoveredPoint) {
+      this.onHover.emit(hoveredPoint);
+      this.hoveredPoint = hoveredPoint;
+      this.draw();
+    }
+
+    let hoveredFunction = undefined;
+    for (const fn of this.functions) {
+      for (let x = ppos.x - TOGGLE_DIST_FN_PX; x < ppos.x + TOGGLE_DIST_FN_PX; x += 1) {
+        let yVal = fn.values[x];
+        if (yVal) {
+          let y = this.cordToPixelPos({ x: 0, y: yVal }).y;
+          let dst = this.dist(ppos, { x, y });
+          // console.log(dst);
+          if (dst <= TOGGLE_POINT_DIST_PX) {
+            hoveredFunction = fn;
+            // console.log("Hovered func", hoveredFunction.expression_latex);
+          }
+        }
+      }
+    }
+
+    if (this.hoveredFunction !== hoveredFunction) {
+      this.hoveredFunction = hoveredFunction;
       this.draw();
     }
 
@@ -432,14 +471,20 @@ export class CartezComponent {
 
   }
 
+  dist(p1: Pos, p2: Pos) {
+
+    let dx = Math.abs(p1.x - p2.x);
+    let dy = Math.abs(p1.y - p2.y);
+    return Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
+  }
+
   distWithin(p1: Pos, p2: Pos, d: number): boolean {
     let dx = Math.abs(p1.x - p2.x);
     if (dx > d) return false;
     let dy = Math.abs(p1.y - p2.y);
     if (dy > d) return false;
 
-    let dist = Math.sqrt((Math.pow(dx, 2) + Math.pow(dy, 2)));
-    return dist < d;
+    return this.dist(p1, p2) < d;
   }
 
 }
