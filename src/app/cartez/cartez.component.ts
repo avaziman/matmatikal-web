@@ -6,7 +6,7 @@ import * as wasm from "algebrars";
 const DEFAULT_SCALE = 10;
 const PRIMARY_COLOR = "#2196f3";
 const TOGGLE_POINT_DIST_PX = 10;
-const TOGGLE_DIST_FN_PX = 5;
+const TOGGLE_DIST_FN_PX = 3;
 
 interface PosT<T> {
   x: T,
@@ -41,6 +41,11 @@ interface FunctionWrapper {
   expression_latex: string,
 }
 
+interface FunctionHover {
+  fn: FunctionWrapper,
+  hovered_at: Pos
+}
+
 @Component({
   selector: 'app-cartez',
   standalone: true,
@@ -63,7 +68,7 @@ export class CartezComponent {
 
   points: Point[] = [];
   hoveredPoint?: Point;
-  hoveredFunction?: FunctionWrapper;
+  hoveredFunction?: FunctionHover;
   // toggled
   selected?: Point;
   // maybe separate axis
@@ -78,7 +83,13 @@ export class CartezComponent {
 
     let point = undefined;
     let last_point = undefined;
-    if (!this.hoveredPoint) {
+    if (this.hoveredPoint) {
+      point = this.hoveredPoint;
+      last_point = this.points.at(-1) as Point;
+    } else {
+      if (this.hoveredFunction) {
+        cords = this.hoveredFunction.hovered_at;
+      }
       let p = {
         letter: letter,
         cords: { x: cords.x, y: cords.y }
@@ -86,10 +97,8 @@ export class CartezComponent {
       this.points.push(p);
       point = p;
       last_point = this.points.at(-2) as Point;
-    } else {
-      point = this.hoveredPoint;
-      last_point = this.points.at(-1) as Point;
     }
+
 
     if (this.selected) {
       last_point = this.selected;
@@ -369,10 +378,10 @@ export class CartezComponent {
     }
     this.context.closePath();
 
-    if (this.hoveredFunction === f) {
-      this.context.lineWidth = 2;
+    if (this.hoveredFunction?.fn === f) {
+      this.context.lineWidth = 3;
     } else {
-      this.context.lineWidth = 1;
+      this.context.lineWidth = 2;
     }
     // this.context.strokeStyle = "#2979ff";
     this.context.strokeStyle = PRIMARY_COLOR;
@@ -446,7 +455,7 @@ export class CartezComponent {
           let dst = this.dist(ppos, { x, y });
           // console.log(dst);
           if (dst <= TOGGLE_POINT_DIST_PX) {
-            hoveredFunction = fn;
+            hoveredFunction = { fn, hovered_at: this.pixelPosToCord({ x, y }) };
             // console.log("Hovered func", hoveredFunction.expression_latex);
           }
         }
