@@ -4,21 +4,14 @@ import { BehaviorSubject } from 'rxjs';
 import * as wasm from "algebrars";
 
 const DEFAULT_SCALE = 10;
-const PRIMARY_COLOR = "#2196f3";
-const TOGGLE_POINT_DIST_PX = 10;
-const TOGGLE_DIST_FN_PX = 3;
+export const PRIMARY_COLOR = "#2196f3";
+const TOGGLE_POINT_DIST_PX = 9;
+const TOGGLE_DIST_FN_PX = 5;
+const TOGGLE_DIST_FN_UNDOCK_PX = 125;
 
 interface PosT<T> {
   x: T,
   y: T
-}
-
-// y = mx + b
-export interface LineFx {
-  m: number;
-  b: number;
-  id: number;
-  ranges?: Range[]
 }
 
 interface Range {
@@ -32,6 +25,12 @@ export type Pos = PosT<number>;
 export interface Point {
   letter: string,
   cords: Pos,
+  bounds: wasm.Bound[]
+}
+
+interface Segment {
+  a: Point,
+  b: Point
 }
 
 interface FunctionWrapper {
@@ -39,11 +38,13 @@ interface FunctionWrapper {
   fast_fn: wasm.FastFunction,
   values: Array<number | undefined>,
   expression_latex: string,
+  color: string
 }
 
 interface FunctionHover {
   fn: FunctionWrapper,
   hovered_at: Pos
+  pos: number
 }
 
 @Component({
@@ -62,11 +63,12 @@ export class CartezComponent {
   @Output() onCord = new EventEmitter<Pos>();
   @Output() onHover = new EventEmitter<Point | undefined>();
 
-  @ViewChild('drawCanvas')
+  @ViewChild('drawCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
   context!: CanvasRenderingContext2D;
 
   points: Point[] = [];
+  segments: Segment[] = [];
   hoveredPoint?: Point;
   hoveredFunction?: FunctionHover;
   // toggled
@@ -75,8 +77,8 @@ export class CartezComponent {
   scale: number = DEFAULT_SCALE;
   view_pos: Pos = { x: 0, y: 0 };
 
+  mouseLeftDown = false;
   vertical_lines: number[] = [];
-  lines: LineFx[] = [];
   functions: FunctionWrapper[] = []
 
   addPointCords(cords: Pos, letter: string) {
@@ -87,12 +89,15 @@ export class CartezComponent {
       point = this.hoveredPoint;
       last_point = this.points.at(-1) as Point;
     } else {
+      let bounds = [];
       if (this.hoveredFunction) {
         cords = this.hoveredFunction.hovered_at;
+        bounds.push(wasm.Bound.belongs_to_fn(this.hoveredFunction.pos))
       }
       let p = {
         letter: letter,
-        cords: { x: cords.x, y: cords.y }
+        cords: { x: cords.x, y: cords.y },
+        bounds
       };
       this.points.push(p);
       point = p;
@@ -106,38 +111,42 @@ export class CartezComponent {
 
 
     if (this.points.length > 1) {
-      const m = (point.cords.y - last_point.cords.y) / (point.cords.x - last_point.cords.x);
-
-      this.addLine({
-        id: this.lines.length,
-        m: m, b: -m * point.cords.x + point.cords.y,
-        ranges: [{ from: Math.min(point.cords.x, last_point.cords.x), to: Math.max(point.cords.x, last_point.cords.x) }]
-      });
+      // const m = (point.cords.y - last_point.cords.y) / (point.cords.x - last_point.cords.x);
+      this.segments.push({ a: last_point, b: point });
+      // this.addLine({
+      //   id: this.lines.length,
+      //   m: m, b: -m * point.cords.x + point.cords.y,
+      //   ranges: [{ from: Math.min(point.cords.x, last_point.cords.x), to: Math.max(point.cords.x, last_point.cords.x) }]
+      // });
     }
     this.draw();
 
     // console.log(this.points);
   }
 
-  addLine(line: LineFx) {
-    this.lines.push(line);
+  clearFunctions() {
+    this.functions.splice(1, this.functions.length - 1);
   }
 
-  addFunction(expr: string) {
-
-
+  addFunction(expr: string, color: string) {
     try {
       const tree = wasm.MathTree.parse(expr);
       console.log("added func", tree.to_latex());
 
       const fn = wasm.Function.from(tree);
-      const fast_fn = wasm.FastFunction.from(expr);
+      const fast_fn = wasm.FastFunction.from(fn);
+      const wrapped_fn = { fn, fast_fn, color, expression_latex: expr, values: Array(this.width).fill(undefined) };
+      this.calculateFnValues(wrapped_fn);
 
-      this.functions = []
-      this.functions.push(
-        { fn, fast_fn, expression_latex: expr, values: Array(this.width).fill(undefined) }
-      )
+      this.functions.push(wrapped_fn);
+
+
+      // this is done to apply bounds to points (make them stay on the func etc)
       this.draw();
+      for (const point of this.points) {
+        console.log("MOVED", point.cords)
+        this.movePoint(point, point.cords);
+      }
     } catch {
       console.log("Failed to parse func: ", expr)
     }
@@ -159,6 +168,14 @@ export class CartezComponent {
       x: this.view_pos.x + (pos.x / this.width) * this.getRange().x,
       y: this.view_pos.y + ((this.height - pos.y) / this.height) * this.getRange().y,
     }
+  }
+
+
+  pixelPosToCordPretty(pos: Pos): Pos {
+    let cords = this.pixelPosToCord(pos);
+    cords.x = Math.round(cords.x * 100) / 100;
+    cords.y = Math.round(cords.y * 100) / 100;
+    return cords;
   }
 
   drawVerticalLine(x: number) {
@@ -210,7 +227,7 @@ export class CartezComponent {
     return { x: this.width / this.scale, y: this.height / this.scale };
   }
 
-  ngAfterViewInit() {
+  ngOnInit() {
     this.canvas.nativeElement.width = 800;
     this.canvas.nativeElement.height = 500;
 
@@ -229,18 +246,30 @@ export class CartezComponent {
     console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
-
+    this.addFunction("0", "black");
+    this.addVerticalLine(0);
     this.draw();
   }
 
-  ngOnInit() {
-    this.lines = []
-    this.addVerticalLine(0);
-    this.addLine({ m: 0, b: 0, id: 0 });
-    // this.addVerticalLine(1);
-    // this.addVerticalLine(2);
-    // this.addVerticalLine(-1);
-    // this.addVerticalLine(-2);
+  calculateFns() {
+    for (const fn of this.functions) {
+      this.calculateFnValues(fn);
+    }
+  }
+
+  calculateFnValues(wrapped_fn: FunctionWrapper) {
+    // calculate points
+    for (let i = 0; i < this.width; i += 1) {
+      const x = this.pixelPosToCord({ x: i, y: 0 }).x;
+
+      try {
+        let evaluated = wrapped_fn.fast_fn.evaluate_float([wasm.VariableVal.new("x", x)]);
+        wrapped_fn.values[i] = evaluated;
+        // console.log({x, y})
+      } catch {
+        wrapped_fn.values[i] = undefined;
+      }
+    }
   }
 
   drawTeeth() {
@@ -291,30 +320,15 @@ export class CartezComponent {
       this.drawVerticalLine(vl);
     }
 
-    for (const l of this.lines) {
-      if (l.ranges) {
-        for (const range of l.ranges) {
-          let p1 = this.lineFx(l, range.from);
-          let p2 = this.lineFx(l, range.to);
-
-          this.drawLine(p1, p2);
-        }
-      } else {
-        let p1 = this.lineFx(l, this.view_pos.x);
-        let p2 = this.lineFx(l, this.view_pos.x + this.getRange().x);
-        this.drawLine(p1, p2);
-      }
-    }
-
     for (const p of this.points) {
       const POINT_SIZE = 5;
 
       if (p === this.hoveredPoint || p == this.selected) {
-        this.drawPoint(p, POINT_SIZE + 4, PRIMARY_COLOR);
+        this.drawPoint(p, TOGGLE_POINT_DIST_PX , PRIMARY_COLOR);
       }
       this.drawPoint(p, POINT_SIZE, 'black');
-
     }
+
 
     this.context.fillStyle = "black";
 
@@ -323,23 +337,15 @@ export class CartezComponent {
     for (const fn of this.functions) {
       this.drawFunction(fn);
     }
+
+    for (const segment of this.segments) {
+      this.drawLine(segment.a.cords, segment.b.cords);
+    }
     console.timeEnd("draw");
   }
 
   drawFunction(f: FunctionWrapper) {
     console.time("draw fn");
-
-    for (let i = 0; i < this.width; i += 1) {
-      const x = this.pixelPosToCord({ x: i, y: 0 }).x;
-      try {
-        let evaluated = f.fast_fn.evaluate_float([wasm.VariableVal.new("x", x)]);
-        f.values[i] = evaluated;
-        // console.log({x, y})
-      } catch {
-        f.values[i] = undefined;
-      }
-    }
-
 
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
@@ -383,8 +389,7 @@ export class CartezComponent {
     } else {
       this.context.lineWidth = 2;
     }
-    // this.context.strokeStyle = "#2979ff";
-    this.context.strokeStyle = PRIMARY_COLOR;
+    this.context.strokeStyle = f.color;
     this.context.stroke();
     console.timeEnd("draw fn");
   }
@@ -397,10 +402,6 @@ export class CartezComponent {
     // }
 
     return res;
-  }
-
-  lineFx(line: LineFx, x: number): Pos {
-    return { x, y: line.m * x + line.b };
   }
 
   togglePoint(p?: Point) {
@@ -431,7 +432,63 @@ export class CartezComponent {
     this.view_pos.y = pointingPos.y - new_range.y * dy;
     console.table({ view: this.view_pos, scale: this.scale, range: this.getRange() })
 
+    this.calculateFns();
     this.draw();
+  }
+
+  releasePoint(point: Point, pos: Pos) {
+    // dock it!
+    if (this.hoveredFunction) {
+      // apply the proper pos
+      point.bounds.push(
+        wasm.Bound.belongs_to_fn(this.hoveredFunction.pos)
+      )
+      console.log("Docked to function:", this.hoveredFunction.fn.expression_latex)
+    }
+
+    // merge points, hovered becomes selected
+    if (this.selected && this.hoveredPoint) {
+      for (const seg of this.segments) {
+        if (seg.a === this.selected) {
+          seg.a = this.hoveredPoint;
+        } else if (seg.b === this.selected) {
+          seg.b = this.hoveredPoint;
+        }
+      }
+      
+      this.points.splice(this.points.indexOf(this.selected), 1);
+      this.selected = this.hoveredPoint;
+      this.draw();
+    }
+  }
+
+  movePoint(point: Point, pos: Pos) {
+    const ppos = this.cordToPixelPos(pos);
+    if (point.bounds.length > 0) {
+      let bound = point.bounds[0];
+      if (bound.kind == wasm.BoundType.BelongsToFunction && bound.function_id) {
+        let closest = this.closestToFnWithinDist(this.functions[bound.function_id], ppos, this.width /* TOGGLE_DIST_FN_UNDOCK_PX */);
+        if (closest) {
+          pos = closest.pos;
+        } else {
+          // user undocks the point from the function, remove bound
+          console.log("Undocked from function:", this.functions[bound.function_id].expression_latex)
+          point.bounds = [];
+        }
+      }
+    }
+    // users docks point to function
+    else if (this.hoveredFunction) {
+      // apply the proper pos
+      let closest = this.closestToFnWithinDist(this.hoveredFunction.fn, ppos, TOGGLE_DIST_FN_PX);
+      if (closest) {
+        pos = closest.pos;
+      }
+    }
+
+    point.cords = pos;
+    this.draw();
+
   }
 
   onMouseMove(e: MouseEvent) {
@@ -439,32 +496,45 @@ export class CartezComponent {
     let cords = this.pixelPosToCord(ppos);
     this.onCord.emit(cords);
 
-    let hoveredPoint = this.points.find((p) => this.distWithin(cords, p.cords, TOGGLE_POINT_DIST_PX / this.scale));
+    let hoveredPoint = this.points.find(
+      (p) => p != this.selected && this.distWithin(cords, p.cords, TOGGLE_POINT_DIST_PX / this.scale));
+    console.log(hoveredPoint)
     if (this.hoveredPoint != hoveredPoint) {
       this.onHover.emit(hoveredPoint);
       this.hoveredPoint = hoveredPoint;
       this.draw();
     }
 
+
     let hoveredFunction = undefined;
+    let i = 0;
     for (const fn of this.functions) {
-      for (let x = ppos.x - TOGGLE_DIST_FN_PX; x < ppos.x + TOGGLE_DIST_FN_PX; x += 1) {
-        let yVal = fn.values[x];
-        if (yVal) {
-          let y = this.cordToPixelPos({ x: 0, y: yVal }).y;
-          let dst = this.dist(ppos, { x, y });
-          // console.log(dst);
-          if (dst <= TOGGLE_POINT_DIST_PX) {
-            hoveredFunction = { fn, hovered_at: this.pixelPosToCord({ x, y }) };
-            // console.log("Hovered func", hoveredFunction.expression_latex);
-          }
-        }
+      let closest = this.closestToFnWithinDist(fn, ppos, TOGGLE_DIST_FN_PX);
+      if (closest && closest.dist <= TOGGLE_DIST_FN_PX) {
+        hoveredFunction = {
+          dist: closest?.dist, hovered: { fn, hovered_at: closest?.pos, pos: i },
+        };
       }
+      i++;
     }
 
     if (this.hoveredFunction !== hoveredFunction) {
-      this.hoveredFunction = hoveredFunction;
+      this.hoveredFunction = hoveredFunction?.hovered;
       this.draw();
+    }
+
+
+    if (e.buttons === 1) {
+      this.mouseLeftDown = true;
+      if (this.selected) {
+        this.movePoint(this.selected, cords);
+        return;
+      }
+    } else if (this.mouseLeftDown === true) {
+      this.mouseLeftDown = false;
+      if (this.selected) {
+        this.releasePoint(this.selected, cords);
+      }
     }
 
     if (~e.buttons & 1) {
@@ -476,9 +546,28 @@ export class CartezComponent {
     let dy = e.movementY;
     this.view_pos.x += mul * dx;
     this.view_pos.y -= mul * dy;
+    this.calculateFns();
     this.draw();
 
   }
+  closestToFnWithinDist(fn: FunctionWrapper, ppos: Pos, toggle_dist: number): { pos: Pos, dist: number } | undefined {
+    let point_and_dist = undefined;
+    for (let x = Math.max(0, ppos.x - toggle_dist); x < Math.max(ppos.x + toggle_dist, this.width); x += 1) {
+      let yVal = fn.values[x];
+      if (yVal) {
+        let y = this.cordToPixelPos({ x: 0, y: yVal }).y;
+        let dist = this.dist(ppos, { x, y });
+        if (dist <= toggle_dist && (!point_and_dist || dist <= point_and_dist?.dist)) {
+
+          point_and_dist = { pos: this.pixelPosToCord({ x, y }), dist };
+        }
+
+      }
+    }
+
+    return point_and_dist;
+  }
+
 
   dist(p1: Pos, p2: Pos) {
 
@@ -488,11 +577,6 @@ export class CartezComponent {
   }
 
   distWithin(p1: Pos, p2: Pos, d: number): boolean {
-    let dx = Math.abs(p1.x - p2.x);
-    if (dx > d) return false;
-    let dy = Math.abs(p1.y - p2.y);
-    if (dy > d) return false;
-
     return this.dist(p1, p2) < d;
   }
 

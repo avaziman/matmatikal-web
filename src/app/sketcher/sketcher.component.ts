@@ -1,9 +1,10 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { CartezComponent, Point, Pos } from '../cartez/cartez.component';
+import { CartezComponent, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.component';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
-import {MatInputModule} from '@angular/material/input';
+import { MatInputModule } from '@angular/material/input';
 import * as wasm from "algebrars";
+import { FormsModule } from '@angular/forms';
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -19,36 +20,48 @@ function makeLetterIterator() {
   return letterIterator;
 }
 
+const FUNCTION_COLORS = [
+  PRIMARY_COLOR,
+  "#1dd1a1",
+  "#feca57",
+  "#ff6b6b",
+  "#5f27cd"
+]
+
 
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
 
-// interface Connection {
-//   a: Point,
-//   b: Point,
-//   equation: LineT
-// }
 export class SketcherComponent {
   letterIt = makeLetterIterator();
-  // connections: Connection[] = [];
+  expressions: string[] = [''];
   lines: string[] = [];
   hovered?: Point;
   toggled?: Point;
   hoverCord?: Pos;
   analytical: boolean = false;
   mouseDown = false;
-  
+
   @ViewChild(CartezComponent, { static: true })
   cartez!: CartezComponent;
   public myMath = Math;
-  
-  onFnChange(s: any) {
-    this.cartez.addFunction(s.target.value)
+
+  onFnChange(index: number) {
+    // this.cartez.functions.
+    this.cartez.clearFunctions();
+    for (let i = 0; i < this.expressions.length; i++) {
+      const expr = this.expressions[i];
+      this.cartez.addFunction(expr, FUNCTION_COLORS[i % FUNCTION_COLORS.length])
+    }
+
+    if (index === this.expressions.length - 1 && this.expressions[index] !== "") {
+      this.expressions.push("")
+    }
   }
   onCord(cords: Pos) {
     // console.log(cord) 
@@ -60,7 +73,7 @@ export class SketcherComponent {
 
     this.hoverCord = cords;
   }
-  
+
   onHover(point: Point | undefined) {
     this.hovered = point;
   }
@@ -71,7 +84,7 @@ export class SketcherComponent {
     if (e.button === 0) {
       // if (this.hovered) {
       // check hovered
-        this.cartez.togglePoint(this.hovered);
+      this.cartez.togglePoint(this.hovered);
       // }
     }
 
@@ -115,7 +128,7 @@ export class SketcherComponent {
       //   this.toggled = undefined;
       // }
       this.mouseDown = false;
-    } 
+    }
   }
 
 

@@ -11,8 +11,13 @@
 <mat-card>
     <mat-card-title>Functions</mat-card-title>
     <div>
-        <input matInput placeholder="f(x)" value="" (keyup)="onFnChange($event)">
-        <!-- <button mat-button color="primary"> Add</button> -->
+        @for (input of this.expressions; track $index) {
+        <div>
+            <input matInput placeholder="f(x)" value="" [(ngModel)]="expressions[$index]"
+                (ngModelChange)="onFnChange($index)">
+        </div>
+        }
+        <!-- <button mat-button color=" primary"> Add</button> -->
     </div>
 
     <ul>
@@ -35,12 +40,12 @@
 </mat-card>
 <mat-card>
     <mat-card-title>Lines</mat-card-title>
-    <ul>
+    <!-- <ul>
         @for (line of this.cartez.lines | slice:1; track line.id) {
         <li>
             y = {{line.m}}x {{['-','+'][+(line.b > 0)] + " " + myMath.abs(line.b)}}
             @for (range of line.ranges; track range) {
             {{ "{" + range.from + " <= x <=" + range.to  + " }"}} } </li>
                 }
-    </ul>
+    </ul> -->
 </mat-card>
