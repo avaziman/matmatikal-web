@@ -1,7 +1,8 @@
-import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter } from '@angular/core';
+import * as wasm from "algebrars";
+import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 // import { Line } from '../logic/line';
-import * as wasm from "algebrars";
+import { find_intersection } from '../sketcher/function_analysis';
 
 const DEFAULT_SCALE = 10;
 export const PRIMARY_COLOR = "#2196f3";
@@ -25,7 +26,8 @@ export type Pos = PosT<number>;
 export interface Point {
   letter: string,
   cords: Pos,
-  bounds: wasm.Bound[]
+  bounds: wasm.Bound[],
+  auto: boolean,
 }
 
 interface Segment {
@@ -33,12 +35,13 @@ interface Segment {
   b: Point
 }
 
-interface FunctionWrapper {
+export interface FunctionWrapper {
   fn: wasm.Function,
   fast_fn: wasm.FastFunction,
   values: Array<number | undefined>,
   expression_latex: string,
-  color: string
+  color?: string,
+  calculated_in_ms: number,
 }
 
 interface FunctionHover {
@@ -54,7 +57,7 @@ interface FunctionHover {
   templateUrl: './cartez.component.html',
   styleUrl: './cartez.component.css'
 })
-export class CartezComponent {
+export class CartezComponent implements OnChanges {
 
   width!: number;
   height!: number;
@@ -63,6 +66,7 @@ export class CartezComponent {
   @Output() onCord = new EventEmitter<Pos>();
   @Output() onHover = new EventEmitter<Point | undefined>();
 
+  @Input() color = 'black';
   @ViewChild('drawCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
   context!: CanvasRenderingContext2D;
@@ -81,7 +85,13 @@ export class CartezComponent {
   vertical_lines: number[] = [];
   functions: FunctionWrapper[] = []
 
-  addPointCords(cords: Pos, letter: string) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.context) {
+      this.draw();
+   }
+  }
+
+  addPointCords(cords: Pos, letter: string, auto = false) {
 
     let point = undefined;
     let last_point = undefined;
@@ -97,6 +107,7 @@ export class CartezComponent {
       let p = {
         letter: letter,
         cords: { x: cords.x, y: cords.y },
+        auto,
         bounds
       };
       this.points.push(p);
@@ -112,6 +123,7 @@ export class CartezComponent {
 
     if (this.points.length > 1) {
       // const m = (point.cords.y - last_point.cords.y) / (point.cords.x - last_point.cords.x);
+
       this.segments.push({ a: last_point, b: point });
       // this.addLine({
       //   id: this.lines.length,
@@ -128,23 +140,32 @@ export class CartezComponent {
     this.functions.splice(1, this.functions.length - 1);
   }
 
-  addFunction(expr: string, color: string) {
+  addFunction(expr: string, color?: string) {
     try {
       const tree = wasm.MathTree.parse(expr);
-      console.log("added func", tree.to_latex());
+      console.log("Added func", tree.to_latex());
 
       const fn = wasm.Function.from(tree);
       const fast_fn = wasm.FastFunction.from(fn);
-      const wrapped_fn = { fn, fast_fn, color, expression_latex: expr, values: Array(this.width).fill(undefined) };
+      const wrapped_fn = { fn, fast_fn, color, expression_latex: expr, values: Array(this.width).fill(undefined), calculated_in_ms: 0 };
       this.calculateFnValues(wrapped_fn);
 
       this.functions.push(wrapped_fn);
 
 
-      // this is done to apply bounds to points (make them stay on the func etc)
+      try {
+        let intersection = find_intersection(wrapped_fn);
+        console.log("INTERSECTION AT", intersection)
+        if (intersection) {
+          this.addPointCords(intersection.cords, "", true);
+        }
+      } catch {
+        console.log("Failed to find intersection");
+      }
+
       this.draw();
+      // this is done to apply bounds to points (make them stay on the func etc)
       for (const point of this.points) {
-        console.log("MOVED", point.cords)
         this.movePoint(point, point.cords);
       }
     } catch {
@@ -183,9 +204,9 @@ export class CartezComponent {
   }
 
   drawLine(p1: Pos, p2: Pos) {
-    this.context.beginPath();
     this.context.lineWidth = 2;
-    this.context.strokeStyle = 'black';
+    this.context.strokeStyle = this.color;
+    this.context.beginPath();
 
     let pc1 = this.cordToPixelPos(p1);
     let pc2 = this.cordToPixelPos(p2);
@@ -199,24 +220,24 @@ export class CartezComponent {
     this.context.beginPath();
     this.context.strokeStyle = color;
     this.context.fillStyle = color;
-
+    
     const ppos = this.cordToPixelPos(point.cords);
-
+    
     this.context.ellipse(ppos.x, ppos.y, radius, radius, 0, 0, 2 * Math.PI);
     this.context.fill();
-
+    
     this.context.lineWidth = 2;
     this.context.lineTo(ppos.x, ppos.y);
-
+    
     this.context.fill();
-
+    
     this.context.beginPath();
     this.context.textAlign = 'center';
 
     let txt = point.letter;
     // if (this.analytical) {
-    //   // coordinates
-    //   txt += `(${point.evaluated_pos.x}, ${point.evaluated_pos.y})`;
+      //   // coordinates
+      //   txt += `(${point.evaluated_pos.x}, ${point.evaluated_pos.y})`;
     // }
     const TEXT_PADDING = 5;
     this.context.fillText(txt, ppos.x, ppos.y - TEXT_PADDING * 2);
@@ -246,7 +267,7 @@ export class CartezComponent {
     console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
-    this.addFunction("0", "black");
+    this.addFunction("0");
     this.addVerticalLine(0);
     this.draw();
   }
@@ -256,12 +277,13 @@ export class CartezComponent {
       this.calculateFnValues(fn);
     }
   }
-
+  
   calculateFnValues(wrapped_fn: FunctionWrapper) {
+    let start = performance.now();
     // calculate points
     for (let i = 0; i < this.width; i += 1) {
       const x = this.pixelPosToCord({ x: i, y: 0 }).x;
-
+      
       try {
         let evaluated = wrapped_fn.fast_fn.evaluate_float([wasm.VariableVal.new("x", x)]);
         wrapped_fn.values[i] = evaluated;
@@ -270,12 +292,16 @@ export class CartezComponent {
         wrapped_fn.values[i] = undefined;
       }
     }
+    let elapsed = performance.now() - start;
+    console.log("ELAPSED",elapsed)
+    elapsed = Math.round(elapsed * 1000) / 1000;
+    wrapped_fn.calculated_in_ms = elapsed;
   }
 
   drawTeeth() {
     const TEETH_PER_AXIS = 10;
     // size is constant in pixels, not in coordinates
-
+    this.context.fillStyle = this.color;
     const SIZE = 5 /* px */ / this.scale;
 
     // round to one significant digit
@@ -324,9 +350,9 @@ export class CartezComponent {
       const POINT_SIZE = 5;
 
       if (p === this.hoveredPoint || p == this.selected) {
-        this.drawPoint(p, TOGGLE_POINT_DIST_PX , PRIMARY_COLOR);
+        this.drawPoint(p, TOGGLE_POINT_DIST_PX, PRIMARY_COLOR);
       }
-      this.drawPoint(p, POINT_SIZE, 'black');
+      this.drawPoint(p, POINT_SIZE, this.color);
     }
 
 
@@ -389,7 +415,7 @@ export class CartezComponent {
     } else {
       this.context.lineWidth = 2;
     }
-    this.context.strokeStyle = f.color;
+    this.context.strokeStyle = f.color ? f.color : this.color;
     this.context.stroke();
     console.timeEnd("draw fn");
   }
@@ -455,7 +481,7 @@ export class CartezComponent {
           seg.b = this.hoveredPoint;
         }
       }
-      
+
       this.points.splice(this.points.indexOf(this.selected), 1);
       this.selected = this.hoveredPoint;
       this.draw();
@@ -463,6 +489,11 @@ export class CartezComponent {
   }
 
   movePoint(point: Point, pos: Pos) {
+    // cant move auto points
+    if (point.auto) {
+      return;
+    }
+
     const ppos = this.cordToPixelPos(pos);
     if (point.bounds.length > 0) {
       let bound = point.bounds[0];
@@ -497,8 +528,8 @@ export class CartezComponent {
     this.onCord.emit(cords);
 
     let hoveredPoint = this.points.find(
-      (p) => p != this.selected && this.distWithin(cords, p.cords, TOGGLE_POINT_DIST_PX / this.scale));
-    console.log(hoveredPoint)
+      (p) => p !== this.selected && this.distWithin(cords, p.cords, TOGGLE_POINT_DIST_PX / this.scale));
+
     if (this.hoveredPoint != hoveredPoint) {
       this.onHover.emit(hoveredPoint);
       this.hoveredPoint = hoveredPoint;

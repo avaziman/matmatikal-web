@@ -1,4 +1,4 @@
-header {
+/* header {
     background-color: #191919;
     color: #106ac9;
     font-family: sans-serif;
@@ -16,18 +16,19 @@ button {
     height: 100%;
     margin: auto 0;
 }
+*/
+
+li {
+    height: 100%;
+    /* gap: 0.1rem; */
+}
 
 ul {
-    height: 3rem;
+    /* height: 3rem; */
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 2rem;
     list-style-type: none;
-    margin: 0 1.5rem;
-}
-
-li {
-    height: 100%;
-    gap: 0.1rem;
+    /* margin: 0 1.5rem; */
 }

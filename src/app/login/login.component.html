@@ -1,6 +1,11 @@
+<div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with"
+  data-size="large" data-logo_alignment="left">
+</div>
+
+
 <mat-card>
     <mat-card-content>
-        <h2>Login</h2> 
+        <h2>Login</h2>
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
             <mat-form-field>
                 <mat-label>Username</mat-label>
@@ -11,8 +16,7 @@
                 <input matInput formControlName="password">
             </mat-form-field>
 
-            <button mat-flat-button color="primary" type="submit">Primary</button>
-
+            <div id="loginBtn"> </div>
         </form>
     </mat-card-content>
 

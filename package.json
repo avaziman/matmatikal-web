@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "@angular/router": "^17.0.0",
+    "@types/google-one-tap": "^1.2.6",
     "algebrars": "file:../algebrars/pkg",
     "mathjs": "^12.3.0",
     "rxjs": "~7.8.0",

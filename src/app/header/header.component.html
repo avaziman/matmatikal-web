@@ -1,19 +1,31 @@
 <header>
-    <ul>
-        <li routerLink='/'>
-            <button mat-button color="primary">
-                    <h1>
-                    M&#x2200;TM&#x2200;IKAL
-                </h1>
+        <mat-toolbar>
+        <mat-toolbar-row>
+            <ul>
+                <li routerLink='/'>
+                    <button mat-button color="primary">
+                        <h1>
+                            M&#x2200;TM&#x2200;IKAL
+                        </h1>
+                    </button>
+                </li>
+                @for (item of items; track $index) {
+                <li [routerLink]="item.path">
+                    <button mat-button color="primary" [title]="item.text"> {{item.text}}
+                        <mat-icon>{{item.icon}}</mat-icon>
+                    </button>
+                </li>
+                }
+                <li>
+                <button mat-button color="primary" (click)="theme.toggleThemeClick()">
+                    @if (theme.darkMode) {
+                    <mat-icon>dark_mode</mat-icon>
+                    } @else {
+                    <mat-icon>light_mode</mat-icon>
+                    }
                 </button>
-        </li>
-        <li *ngFor="let item of items" [routerLink]="item.path">
-            <button mat-button color="primary" [title]="item.text"> {{item.text}}
-                <!-- <span class="material-symbols-outlined">
-                {{item.icon}}
-            </span> -->
-                <mat-icon>{{item.icon}}</mat-icon>
-            </button>
-        </li>
-    </ul>
+                </li>
+            </ul>
+        </mat-toolbar-row>
+    </mat-toolbar>
 </header>

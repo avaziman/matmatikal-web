@@ -1,10 +1,11 @@
+import * as wasm from "algebrars";
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CartezComponent, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.component';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
-import * as wasm from "algebrars";
 import { FormsModule } from '@angular/forms';
+import { ThemeServiceService } from '../theme-service.service';
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -50,6 +51,15 @@ export class SketcherComponent {
   @ViewChild(CartezComponent, { static: true })
   cartez!: CartezComponent;
   public myMath = Math;
+
+  color: string = 'black';
+  constructor(private theme: ThemeServiceService) {
+    this.theme.emitter.subscribe((mode) => {
+
+      this.color = this.theme.darkMode ? "white" : "black";
+    });
+  }
+  
 
   onFnChange(index: number) {
     // this.cartez.functions.
