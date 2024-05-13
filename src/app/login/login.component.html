@@ -1,5 +1,7 @@
+<!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
+
 <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with"
-  data-size="large" data-logo_alignment="left">
+    data-size="large" data-logo_alignment="left">
 </div>
 
 
@@ -8,16 +10,16 @@
         <h2>Login</h2>
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
             <mat-form-field>
-                <mat-label>Username</mat-label>
-                <input matInput formControlName="name">
+                <mat-label>Email</mat-label>
+                <input matInput formControlName="email">
             </mat-form-field>
             <mat-form-field>
                 <mat-label>Password</mat-label>
                 <input matInput formControlName="password">
             </mat-form-field>
+            <button mat-flat-button type="submit" color="primary">Primary</button>
 
             <div id="loginBtn"> </div>
         </form>
     </mat-card-content>
-
 </mat-card>

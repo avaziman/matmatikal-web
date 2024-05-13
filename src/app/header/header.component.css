@@ -18,17 +18,20 @@ button {
 }
 */
 
-li {
-    height: 100%;
-    /* gap: 0.1rem; */
-}
 
 ul {
-    /* height: 3rem; */
+    width: 100%;
+    margin: 2rem;
     display: flex;
-    align-items: center;
     flex-direction: row;
-    gap: 2rem;
+    align-items: center;
+    /* background-color: red; */
+    justify-content: space-between;
     list-style-type: none;
     /* margin: 0 1.5rem; */
+}
+
+.header-group {
+    gap: 2rem;
+    display: flex;
 }

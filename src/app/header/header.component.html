@@ -1,30 +1,30 @@
 <header>
-        <mat-toolbar>
+    <mat-toolbar>
         <mat-toolbar-row>
             <ul>
-                <li routerLink='/'>
-                    <button mat-button color="primary">
-                        <h1>
-                            M&#x2200;TM&#x2200;IKAL
-                        </h1>
-                    </button>
-                </li>
-                @for (item of items; track $index) {
-                <li [routerLink]="item.path">
-                    <button mat-button color="primary" [title]="item.text"> {{item.text}}
-                        <mat-icon>{{item.icon}}</mat-icon>
-                    </button>
-                </li>
-                }
-                <li>
-                <button mat-button color="primary" (click)="theme.toggleThemeClick()">
-                    @if (theme.darkMode) {
-                    <mat-icon>dark_mode</mat-icon>
-                    } @else {
-                    <mat-icon>light_mode</mat-icon>
+                <div class="header-group">
+                    <li routerLink='/'>
+                        <button mat-button color="primary">
+                            <h1>
+                                M&#x2200;TM&#x2200;IKAL
+                            </h1>
+                        </button>
+                    </li>
+                    @for (item of items; track $index) {
+                    <li [routerLink]="item.path">
+                        <button mat-button color="primary" [title]="item.text"> {{item.text}}
+                            <mat-icon>{{item.icon}}</mat-icon>
+                        </button>
+                    </li>
                     }
-                </button>
-                </li>
+                </div>
+                <div class="header-group">
+                    <li>
+                        <button mat-icon-button color="primary" (click)="theme.toggleThemeClick()">
+                            <mat-icon>{{theme.darkMode ? "dark_mode" : "light_mode"}}</mat-icon>
+                        </button>
+                    </li>
+                </div>
             </ul>
         </mat-toolbar-row>
     </mat-toolbar>
