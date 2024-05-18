@@ -1,56 +1,64 @@
-import {provideNativeDateAdapter} from '@angular/material/core';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { CredentialResponse, PromptMomentNotification } from 'google-one-tap';
 
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input'
 import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card';
+import { Router, RouterModule } from '@angular/router';
+import { LowerCasePipe } from '@angular/common';
+import { UserRegisterWeb } from '../../api_bindings/UserRegisterWeb';
+import { MatDividerModule } from '@angular/material/divider';
 
+import { ThemeServiceService } from '../theme-service.service';
+import { MatIcon } from '@angular/material/icon';
+import { AuthService } from '../auth.service';
 const GOOGLE_CLIEND_ID = '794981933073-c59qh87r995625mjrk4iph5m89cd9s03.apps.googleusercontent.com';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, MatInputModule, MatFormFieldModule, MatButtonModule, MatCardModule],
+  imports: [ReactiveFormsModule, MatInputModule, MatFormFieldModule, MatButtonModule, MatCardModule, RouterModule, LowerCasePipe, MatDividerModule, MatIcon],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
 
 export class LoginComponent implements OnInit {
   registerForm = this.formBuilder.group({
-    email: '',
-    password: ''
+    email: new FormControl(undefined, [
+      Validators.required, Validators.email]),
+    password: new FormControl(undefined, [
+      Validators.required, Validators.minLength(6)])
   });
 
+  @Input() register: boolean = false;
+  operation!: string;
+  hide: boolean = true;
+  alternative_operation!: string;
+
+  renderGoogleButton(darkMode: boolean) {
+    // @ts-ignore
+    google.accounts.id.renderButton(document!.getElementById('loginBtn')!, {
+      theme:
+        darkMode ? 'filled_black' : 'outline', size: 'large', width: 200
+    })
+
+  }
+
   ngOnInit() {
+
+    this.operation = this.opToString(this.register);
+    this.alternative_operation = this.opToString(!this.register);
     // dynamically load google library
     let node = document.createElement('script');
     node.src = "https://accounts.google.com/gsi/client";
     node.type = 'text/javascript';
     node.async = true;
     node.defer = true;
-    document.getElementsByTagName('head')[0].appendChild(node);  
-    // fetch(
-    //           `https://people.googleapis.com/v1/people/${res.additionalUserInfo.profile.id}?personFields=birthdays,genders&access_token=${res.credential.accessToken}`
-    //       ).then(response => console.log(response))
-// var fragmentString = location.hash.substring(1);
-//   var params = {};
-//   var regex = /([^&=]+)=([^&]*)/g, m;
-//   while (m = regex.exec(fragmentString)) {
-//     params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
-//   }
-//   if (Object.keys(params).length > 0 && params['state']) {
-//     if (params['state'] == localStorage.getItem('state')) {
-//       localStorage.setItem('oauth2-test-params', JSON.stringify(params) );
+    document.getElementsByTagName('head')[0].appendChild(node);
 
-//       // trySampleRequest();
-//     } else {
-//       console.log('State mismatch. Possible CSRF attack');
-//     }
-//   }
-  
     // @ts-ignore
     window.onGoogleLibraryLoad = () => {
       console.log("Google LOADED")
@@ -63,10 +71,12 @@ export class LoginComponent implements OnInit {
         cancel_on_tap_outside: true,
       })
       // @ts-ignore
-      google.accounts.id.renderButton(document!.getElementById('loginBtn')!, { theme: 'outline', size: 'large', width: 200 })
-      // @ts-ignore
       // google.accounts.id.prompt();
+      this.renderGoogleButton(this.themeService.darkMode)
     }
+    this.themeService.emitter.subscribe((darkMode) => {
+      this.renderGoogleButton(darkMode)
+    })
 
   }
 
@@ -115,9 +125,39 @@ export class LoginComponent implements OnInit {
     form.submit();
   }
   onSubmit() {
-    console.log("SUB!");
+    // let body: UserRegisterWeb = {
+    //   // username:
+    //   birthday: [birthday.getUTCFullYear(), birthday.getUTCMonth(), birthday.getUTCDate()]
+    // }
+
+    if (this.registerForm.valid === false) {
+      return;
+    }
+
+    let val = this.registerForm.value;
+    if (this.register === true) {
+      console.log('val', val)
+      this.router.navigate(['/registering'], {
+        state: {
+          email: val.email,
+          password: val.password
+        }
+      });
+    } else {
+      if (val.email && val.password) {
+        this.authService.login(val.email, val.password);
+      }
+    }
   }
+
+  opToString(register: boolean): string {
+    return register ? "Register" : "Login";
+  }
+
   constructor(
     private formBuilder: FormBuilder,
+    private themeService: ThemeServiceService,
+    private router: Router,
+    private authService: AuthService,
   ) { }
 }

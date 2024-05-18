@@ -54,9 +54,9 @@ export class SketcherComponent {
 
   color: string = 'black';
   constructor(private theme: ThemeServiceService) {
+    this.color = this.theme.darkMode ? "white" : "black";
     this.theme.emitter.subscribe((mode) => {
-
-      this.color = this.theme.darkMode ? "white" : "black";
+      this.color = mode ? "white" : "black";
     });
   }
   

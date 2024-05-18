@@ -8,3 +8,29 @@ form {
     display: flex;
     flex-direction: column;
 }
+
+#loginBtn {
+    margin: 0 auto;
+}
+
+.container {
+margin: 1rem 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.line {
+  flex: 1;
+}
+
+.text {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* mat-divider {
+  width: 100%;
+} */

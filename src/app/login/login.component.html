@@ -1,25 +1,48 @@
 <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 
-<div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with"
-    data-size="large" data-logo_alignment="left">
-</div>
-
-
 <mat-card>
+    <mat-card-header>
+
+        <mat-card-title mat-line>{{operation}}</mat-card-title>
+        <mat-card-subtitle>
+            <button mat-button color="accent" [routerLink]="alternative_operation | lowercase" [relativeTo]="null">
+                Or {{alternative_operation}}
+            </button>
+        </mat-card-subtitle>
+    </mat-card-header>
     <mat-card-content>
-        <h2>Login</h2>
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
             <mat-form-field>
                 <mat-label>Email</mat-label>
                 <input matInput formControlName="email">
+                <mat-icon matSuffix>email</mat-icon>
+                @if (registerForm.get('email')?.hasError('required')) {
+                <mat-error>Email is <strong>required</strong></mat-error>
+                }@else {
+                <mat-error>Email is <strong>invalid</strong></mat-error>
+                }
             </mat-form-field>
             <mat-form-field>
                 <mat-label>Password</mat-label>
                 <input matInput formControlName="password">
+                <button mat-icon-button matSuffix type="button" (click)="hide = !hide"
+                    [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                    <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                @if (registerForm.get('password')?.hasError('minlength')) {
+                <mat-error>Password is too <strong>short</strong></mat-error>
+                }
             </mat-form-field>
-            <button mat-flat-button type="submit" color="primary">Primary</button>
+            <button mat-flat-button type="submit" color="primary">Continue</button>
 
-            <div id="loginBtn"> </div>
+            <div class="container">
+                <div class="line"><mat-divider></mat-divider></div>
+                <div class="text mat-typography">Or with</div>
+                <div class="line"><mat-divider></mat-divider></div>
+            </div>
+
+            <div mat-button id="loginBtn"> </div>
         </form>
     </mat-card-content>
+
 </mat-card>
