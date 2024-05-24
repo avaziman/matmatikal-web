@@ -2,8 +2,9 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { UserRegisterWeb } from '../api_bindings/UserRegisterWeb';
 
-const API_ENDPOINT = "http://localhost:3000";
+const API_ENDPOINT = "http://localhost:8080";
 
 @Injectable({
   providedIn: 'root',
@@ -17,5 +18,9 @@ export class AuthService {
 
   login(email: string, password: string): Observable<any> {
     return this.http.post(this.api_url("/auth/login"), { email, pass: password });
+  }
+
+  register(register_data: UserRegisterWeb): Observable<any> {
+    return this.http.post(this.api_url("/auth/register"), register_data);
   }
 }

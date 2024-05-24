@@ -25,7 +25,8 @@
                     }
                 </mat-select>
             </mat-form-field>
-            <button mat-flat-button type="submit" color="primary">Continue</button>
+            <button mat-flat-button type="submit" color="primary"
+                [disabled]="!registerForm.valid">Continue</button>
         </form>
 
     </mat-card-content>

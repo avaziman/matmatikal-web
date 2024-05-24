@@ -29,9 +29,13 @@
                         ],
                         "styles": [
                             "@angular/material/prebuilt-themes/pink-bluegrey.css",
-                            "src/styles.scss"
+                            "src/styles.scss",
+                            "node_modules/katex/dist/katex.min.css"
                         ],
-                        "scripts": []
+                        "scripts": [
+                            "node_modules/katex/dist/katex.min.js",
+                            "node_modules/katex/dist/contrib/auto-render.min.js"
+                        ]
                     },
                     "configurations": {
                         "production": {

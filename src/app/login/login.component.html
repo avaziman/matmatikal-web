@@ -24,16 +24,18 @@
             </mat-form-field>
             <mat-form-field>
                 <mat-label>Password</mat-label>
-                <input matInput formControlName="password">
+                <input matInput formControlName="password" [type]="hide ? 'password' : 'text'">
                 <button mat-icon-button matSuffix type="button" (click)="hide = !hide"
                     [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
                     <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
                 </button>
-                @if (registerForm.get('password')?.hasError('minlength')) {
+                @if (registerForm.get('password')?.hasError('required')) {
+                <mat-error>Password is <strong>required</strong></mat-error>
+                }@else if (registerForm.get('password')?.hasError('minlength')) {
                 <mat-error>Password is too <strong>short</strong></mat-error>
                 }
             </mat-form-field>
-            <button mat-flat-button type="submit" color="primary">Continue</button>
+            <button mat-flat-button type="submit" color="primary" [disabled]="!registerForm.valid">Continue</button>
 
             <div class="container">
                 <div class="line"><mat-divider></mat-divider></div>

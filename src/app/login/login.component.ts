@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule } from '@angular/material/card';
 import { Router, RouterModule } from '@angular/router';
 import { LowerCasePipe } from '@angular/common';
-import { UserRegisterWeb } from '../../api_bindings/UserRegisterWeb';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { ThemeServiceService } from '../theme-service.service';

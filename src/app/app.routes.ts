@@ -5,6 +5,7 @@ import { SketcherComponent } from './sketcher/sketcher.component';
 import { HomeComponent } from './home/home.component';
 import { RegisterDetailsComponent } from './register-details/register-details.component';
 import { RegisterComponent } from './register/register.component';
+import { TreeComponent } from './tree/tree.component';
 // import { PaintComponent } from './paint/paint.component';
 
 export const routes: Routes = [
@@ -16,4 +17,5 @@ export const routes: Routes = [
     { path: 'registering', component: RegisterDetailsComponent },
     // { path: 'paint', component: PaintComponent }
     { path: 'sketch', component: SketcherComponent },
+    { path: 'tree', component: TreeComponent },
 ];
