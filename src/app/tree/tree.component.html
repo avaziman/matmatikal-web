@@ -1,15 +1,11 @@
 <p>tree works!</p>
 
 
-<mat-form-field class="example-full-width">
-  <mat-label>Enter expression</mat-label>
-  <input matInput [formControl]="entered_expression" [style.opacity]="entered_expression.value == '' ? 1 : 0"
-    type="text" placeholder="Expression">
+<app-math-input (expressionChange)="expressionChange($event)"></app-math-input>
 
-  <!-- [(ngModel)]="entered_expression" (ngModelChange)="onChange($event)"  -->
-  @if (entered_expression.errors) {
-  <mat-error>Invalid expression</mat-error>
-  }
-  <markdown katex [katexOptions]="options" [data]="latex_expression" (error)="onLatexError($event)">
-  </markdown>
-</mat-form-field>
+<markdown
+  mermaid
+  [mermaidOptions]="mermaidOptions"
+  [data]='data'
+  >
+</markdown>

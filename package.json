@@ -22,13 +22,12 @@
     "@angular/router": "^17.0.0",
     "@types/google-one-tap": "^1.2.6",
     "algebrars": "file:../algebrars/pkg",
-    "katex": "^0.16.10",
     "marked": "^12.0.2",
-    "mathjs": "^12.3.0",
+    "mathlive": "^0.98.6",
+    "mermaid": "^10.9.1",
     "ngx-markdown": "^17.2.1",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.14.2"
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^17.0.2",
@@ -36,6 +35,8 @@
     "@angular/cli": "^17.0.5",
     "@angular/compiler-cli": "^17.0.0",
     "@types/algebra.js": "^0.2.4",
+    "@types/d3": "^7.4.3",
+    "@types/dompurify": "^3.0.5",
     "@types/jasmine": "~5.1.0",
     "@wasm-tool/wasm-pack-plugin": "^1.7.0",
     "i": "^0.3.7",

@@ -4,8 +4,10 @@ import { CartezComponent, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.com
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
+import { MatListModule} from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { ThemeServiceService } from '../theme-service.service';
+import { MathInputComponent } from "../math-input/math-input.component";
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -33,7 +35,7 @@ const FUNCTION_COLORS = [
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
@@ -61,8 +63,8 @@ export class SketcherComponent {
   }
   
 
-  onFnChange(index: number) {
-    // this.cartez.functions.
+  changeFn(index: number, val: string) {
+    this.expressions[index] = val;
     this.cartez.clearFunctions();
     for (let i = 0; i < this.expressions.length; i++) {
       const expr = this.expressions[i];

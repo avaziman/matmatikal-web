@@ -1,0 +1,33 @@
+#mathField {
+}
+
+math-field {
+    display: block;
+    color: inherit;
+    font-size: 1.5rem;
+    padding: 8px;
+    margin: 10px 10px;
+    border: 2px solid gray;
+    border-radius: 8px; 
+    background-color: transparent;
+    background-color: var(--mat-app-background-color);
+    --caret-color: var(--primary-color);
+    --selection-background-color-focused: red;
+    --smart-fence-color: red;
+    
+}
+
+math-field:focus-within {
+    /* border-radius: 8px; */
+    outline: var(--primary-color) solid 3px;
+}
+
+/* remove menu */
+math-field::part(menu-toggle) {
+    display: none;
+}
+
+math-field::part(container) {
+    box-sizing: border-box;
+    background-color: var(--mat-app-background-color);
+} 

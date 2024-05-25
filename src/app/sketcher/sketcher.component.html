@@ -1,6 +1,5 @@
 <app-cartez (onCord)="onCord($event)" (onHover)="onHover($event)" (mousedown)="onMouseDown($event)"
-    (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" 
-    [color]="color"
+    (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" [color]="color"
     oncontextmenu="return false;"></app-cartez>
 @if (hoverCord) {
 <a>Selected Cord: ({{hoverCord.x}},{{hoverCord.y}})
@@ -12,18 +11,19 @@
 }
 <mat-card>
     <mat-card-title>Functions</mat-card-title>
-    <div>
+    <mat-list>
         @for (input of this.expressions; track $index) {
-        <div>
-            <input matInput placeholder="f(x)" value="" [(ngModel)]="expressions[$index]"
-                (ngModelChange)="onFnChange($index)">
-        </div>
+        <!-- <mat-list-item> -->
+            <app-math-input mat-list-item (expressionChange)="changeFn($index, $event)" placeholder="f(x)"></app-math-input>
+            <!-- <input matInput placeholder="f(x)" value="" [(ngModel)]="expressions[$index]"
+                (ngModelChange)="onFnChange($index)"> -->
+        <!-- </mat-list-item> -->
         }
-        @for (fn of this.cartez.functions; track $index) {
+        <!-- @for (fn of this.cartez.functions; track $index) {
         <a>Evaluated in: {{fn.calculated_in_ms}} MS</a>
-        }
+        } -->
         <!-- <button mat-button color=" primary"> Add</button> -->
-    </div>
+    </mat-list>
 
     <ul>
         @for (fn of this.cartez.functions; track fn) {

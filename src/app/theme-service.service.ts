@@ -10,6 +10,7 @@ export class ThemeServiceService {
    this.emitter.emit(this.darkMode);
     if (this.darkMode) {
       document.body.classList.add('dark-theme');
+      document.body.setAttribute('theme', 'dark');
     } else {
       document.body.classList.remove('dark-theme');
     }

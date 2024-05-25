@@ -1,34 +1,55 @@
 import * as wasm from "algebrars";
-import { Component, ElementRef, OnChanges, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Component, ElementRef, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { AbstractControl, FormControl, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { KatexOptions, MarkdownModule, MarkdownService } from 'ngx-markdown';
-import { i } from "mathjs";
+import { MathInputComponent } from "../math-input/math-input.component";
+import { ThemeServiceService } from "../theme-service.service";
+import { MarkdownComponent, MermaidAPI } from "ngx-markdown";
 
+// credit https://github.com/syedabdulaala/mathlive-ng-sample
 @Component({
   selector: 'app-tree',
   standalone: true,
-  imports: [MarkdownModule, FormsModule, MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule, MathInputComponent, MarkdownComponent],
   templateUrl: './tree.component.html',
   styleUrl: './tree.component.css'
 })
 export class TreeComponent {
+
+  @ViewChild('tree', { static: true }) treeElement!: ElementRef<HTMLDivElement>;
+  latex_expression: string = '';
+  last_valid_latex?: string;
+  expression_error?: string;
+  data: string = '```mermaid\ngraph TB\n    a-->b\n```';
+  mermaidOptions: MermaidAPI.Config = {
+    fontFamily: '"trebuchet ms", verdana, arial, sans-serif',
+    logLevel: MermaidAPI.LogLevel.Warn,
+    theme: MermaidAPI.Theme.Dark,
+  };
+
+  expressionChange(expr: string) {
+    try {
+      const tree = wasm.MathTree.parse(expr);
+      const latex = tree.to_latex();
+      this.latex_expression = '$' + latex + '$';
+      this.last_valid_latex = this.latex_expression;
+
+      // return null;
+    } catch (e) {
+      this.latex_expression = '$' + expr + '$';
+      // console.log('Invalid expression: ', this.expression_error)
+      // this.last_valid_latex = undefined;
+    }
+  }
+
+
   onLatexError(err: any) {
 
     if (this.last_valid_latex) {
       this.latex_expression = this.last_valid_latex;
     }
   }
-  latex_expression: string = '';
-  last_valid_latex?: string;
-  expression_error?: string;
-  entered_expression = new FormControl('', {
-    validators:
-      [this.expressionValidator.bind(this)],
-    nonNullable: true
-  });
-
   expressionValidator(control: AbstractControl<any, any>): ValidationErrors | null {
     let expr = control.value;
     console.log({ expr })
@@ -56,14 +77,12 @@ export class TreeComponent {
   @ViewChild('exprInput', { static: true })
   input!: ElementRef<HTMLSpanElement>;
 
-  public options: KatexOptions = {
-    displayMode: true,
-    throwOnError: true,
-    errorCallback: this.onLatexError.bind(this)
-  };
-  constructor(
+  // public options: KatexOptions = {
+  //   displayMode: true,
+  //   throwOnError: true,
+  //   errorCallback: this.onLatexError.bind(this)
+  // };
 
-  ) { }
 
   onChange(val: string) {
     if (val.length == 0) return;
