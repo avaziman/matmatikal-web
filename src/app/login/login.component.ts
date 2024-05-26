@@ -81,16 +81,33 @@ export class LoginComponent implements OnInit {
 
   async googleResponse(response: CredentialResponse) {
     // your logic goes here
-    console.log(response);
-    // let res = fetch("http://localhost:8080/google-login", {
-    //   method: "post",
-    //   body: response.credential
-    // })
-    this.oauthSignIn();
+    let jwt = response.credential;
+    console.log(jwt);
+    
+    this.authService.google_login(jwt)
+      .subscribe({
+        next: ok => {
+          // login successful
+          this.router.navigate(["/sketch"]);
+        },
+        error: e => {
+          // console.error('login error', e);
+          // if (e.error) {
+          //   alert('Login error: ' + e.error)
+          // }
+          // user doesn't exist, try to register
+          this.register = true;
+        }
+      });
+    
+    
+    if (this.register) {
+      this.oauthSignInScope();
+    }
   }
 
 
-  oauthSignIn() {
+  oauthSignInScope() {
     // Google's OAuth 2.0 endpoint for requesting an access token
     var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
@@ -103,7 +120,7 @@ export class LoginComponent implements OnInit {
     var params: any = {
       'client_id': GOOGLE_CLIEND_ID,
       // 'redirect_uri': document.location,
-      'redirect_uri': "http://localhost:4200",
+      'redirect_uri': "http://localhost:4200/registering",
       'response_type': 'token',
       'scope': 'https://www.googleapis.com/auth/user.birthday.read',
       'include_granted_scopes': 'true',
@@ -142,10 +159,20 @@ export class LoginComponent implements OnInit {
           password: val.password
         }
       });
-    } else {
-      if (val.email && val.password) {
-        this.authService.login(val.email, val.password);
-      }
+    } else if (val.email && val.password) {
+      this.authService.login(val.email, val.password)
+        .subscribe({
+          next: ok => {
+            // login successful
+            this.router.navigate(["/sketch"]);
+          },
+          error: e => {
+            console.error('login error', e);
+            if (e.error) {
+              alert('Login error: ' + e.error)
+            }
+          }
+        })
     }
   }
 

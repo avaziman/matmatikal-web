@@ -1,51 +1,42 @@
 <div id="sketcher">
     <mat-card id="givens">
         <mat-card-content>
-            
-            <mat-card>
-                @if (hoverCord) {
-                <a>Selected Cord: ({{hoverCord.x}},{{hoverCord.y}})
-                </a>
-                }
-                @if (hovered) {
-                <a>Selected Point: ({{hovered.letter}})
-                </a>
-                }
-                <mat-card-header>
-                    <mat-card-title>
-                        Functions
-                    </mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                    <mat-divider></mat-divider>
-                    <mat-list>
-                        @for (input of this.expressions; track $index) {
-                        <!-- <mat-list-item> -->
-                        <app-math-input mat-list-item (expressionChange)="changeFn($index, $event)"
-                            placeholder="f(x)"></app-math-input>
-                        <!-- <input matInput placeholder="f(x)" value="" [(ngModel)]="expressions[$index]"
-                (ngModelChange)="onFnChange($index)"> -->
-                        <!-- </mat-list-item> -->
-                        }
-                        <!-- @for (fn of this.cartez.functions; track $index) {
+            @if (hoverCord) {
+            <a>Selected Cord: ({{hoverCord.x}},{{hoverCord.y}})
+            </a>
+            }
+            @if (hovered) {
+            <a>Selected Point: ({{hovered.letter}})
+            </a>
+            }
+            <div>
+                <mat-list>
+                    <h2 matSubheader>Functions
+                        <mat-divider></mat-divider>
+                    </h2>
+
+                    @for (input of this.expressions; track $index) {
+                    <app-math-input mat-list-item (expressionChange)="changeFn($index, $event)"
+                        placeholder="f(x)"></app-math-input>
+                    }
+                </mat-list>
+                <!-- @for (fn of this.cartez.functions; track $index) {
         <a>Evaluated in: {{fn.calculated_in_ms}} MS</a>
         } -->
-                        <!-- <button mat-button color=" primary"> Add</button> -->
-                    </mat-list>
-
-                    <!-- <ul>
+                <!-- <button mat-button color=" primary"> Add</button> -->
+            </div>
+            <!-- <ul>
             @for (fn of this.cartez.functions; track fn) {
             <li>
                 {{fn.expression_latex}}
             </li>
             }
         </ul> -->
-                </mat-card-content>
-            </mat-card>
-            <mat-card>
-                <mat-card-title>Points</mat-card-title>
+
+            <div>
+                <h2>Points</h2>
                 <ul>
-                    @for (item of this.cartez.points; track item.letter) {
+                    @for (item of this.cartez.points; track $index) {
                     <li>
                         {{item.letter}} ({{item.cords.x}},{{item.cords.y}})
                         @for (bound of item.bounds; track $index) {
@@ -56,9 +47,9 @@
                     </li>
                     }
                 </ul>
-            </mat-card>
-            <mat-card>
-                <mat-card-title>Lines</mat-card-title>
+            </div>
+            <div>
+                <h3>Lines</h3>
                 <!-- <ul>
         @for (line of this.cartez.lines | slice:1; track line.id) {
         <li>
@@ -66,11 +57,11 @@
             @for (range of line.ranges; track range) {
             {{ "{" + range.from + " <= x <=" + range.to  + " }"}} } </li>
                 }
-    </ul> -->
-            </mat-card>
-            <mat-card>
-                <mat-card-title>Intersection Points</mat-card-title>
-            </mat-card>
+            </ul> -->
+            </div>
+            <div>
+                <h3>Intersection Points</h3>
+            </div>
         </mat-card-content>
     </mat-card>
     <app-cartez (onCord)="onCord($event)" (onHover)="onHover($event)" (mousedown)="onMouseDown($event)"

@@ -4,11 +4,12 @@ import { CartezComponent, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.com
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
-import { MatListModule} from '@angular/material/list';
+import { MatListModule } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { ThemeServiceService } from '../theme-service.service';
 import { MathInputComponent } from "../math-input/math-input.component";
 import { MatIconModule } from "@angular/material/icon";
+import { MatGridListModule } from '@angular/material/grid-list';
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -62,7 +63,7 @@ export class SketcherComponent {
       this.color = mode ? "white" : "black";
     });
   }
-  
+
 
   changeFn(index: number, val: string) {
     this.expressions[index] = val;

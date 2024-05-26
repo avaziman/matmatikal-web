@@ -300,7 +300,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   calculateFnValues(wrapped_fn: FunctionWrapper) {
-    let start = performance.now();
+    // let start = performance.now();
     // calculate points
     for (let i = 0; i < this.width; i += 1) {
       const x = this.pixelPosToCord({ x: i, y: 0 }).x;
@@ -313,10 +313,10 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
         wrapped_fn.values[i] = undefined;
       }
     }
-    let elapsed = performance.now() - start;
-    console.log("ELAPSED", elapsed)
-    elapsed = Math.round(elapsed * 1000) / 1000;
-    wrapped_fn.calculated_in_ms = elapsed;
+    // let elapsed = performance.now() - start;
+    // console.log("ELAPSED", elapsed)
+    // elapsed = Math.round(elapsed * 1000) / 1000;
+    // wrapped_fn.calculated_in_ms = elapsed;
   }
 
   drawTeeth() {
@@ -360,7 +360,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   draw() {
-    console.time("draw");
+    // console.time("draw");
     this.context.clearRect(0, 0, this.width, this.height);
 
     for (const vl of this.vertical_lines) {
@@ -388,11 +388,11 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     for (const segment of this.segments) {
       this.drawLine(segment.a.cords, segment.b.cords);
     }
-    console.timeEnd("draw");
+    // console.timeEnd("draw");
   }
 
   drawFunction(f: FunctionWrapper) {
-    console.time("draw fn");
+    // console.time("draw fn");
 
     this.context.beginPath();
     const MAX_Y = this.view_pos.y + this.getRange().y;
@@ -438,7 +438,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     }
     this.context.strokeStyle = f.color ? f.color : this.color;
     this.context.stroke();
-    console.timeEnd("draw fn");
+    // console.timeEnd("draw fn");
   }
   shortNum(n: number): string {
     let res = n.toString();

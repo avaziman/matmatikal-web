@@ -16,8 +16,13 @@ export class AuthService {
     return new URL(path, API_ENDPOINT).href;
   }
 
+  google_login(jwt: string): Observable<any> {
+    return this.http.post(this.api_url("/auth/google-login"), jwt );
+  }
+
+
   login(email: string, password: string): Observable<any> {
-    return this.http.post(this.api_url("/auth/login"), { email, pass: password });
+    return this.http.post(this.api_url("/auth/login"), { email, password });
   }
 
   register(register_data: UserRegisterWeb): Observable<any> {

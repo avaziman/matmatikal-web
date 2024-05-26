@@ -31,9 +31,10 @@ export class RegisterDetailsComponent implements OnInit {
       username: ['', [Validators.required]],
     });
 
-  @Input() email!: string;
-  @Input() password!: string;
-
+  email!: string;
+  password!: string;
+  google_id?: string;
+  
   grades = [...Array(13).keys()].splice(1).reverse();
 
   constructor(private formBuilder: NonNullableFormBuilder, private authService: AuthService,
@@ -45,12 +46,13 @@ export class RegisterDetailsComponent implements OnInit {
     let passed_values = history.state;
     this.email = passed_values['email'];
     this.password = passed_values['password'];
-
-    if (!this.email || !this.password) {
-      this.router.navigate(["/register"]);
-    }
+    this.google_id = passed_values['password'];
+    
+    // if (!this.email || !this.password) {
+    //   this.router.navigate(["/register"]);
+    // }
   }
-
+  
   onSubmit() {
     // if (!this.registerForm.valid)
     // let val = this.nFormBuilder.rec;
@@ -61,7 +63,7 @@ export class RegisterDetailsComponent implements OnInit {
     let registerData = {
       username: val.username,
       grade: val.grade,
-      google_id: null,
+      google_id: this.google_id,
       password: this.password,
       email: this.email,
       birthday_date_ymd: [val.birthday?.getFullYear(), val.birthday?.getMonth(), val.birthday?.getDate()]
@@ -72,8 +74,22 @@ export class RegisterDetailsComponent implements OnInit {
         this.router.navigate(["/sketch"]);
       },
       error: e => {
-        console.log(e)
-        alert(`Failed to register: ${e}`)
+        console.log("register error", e)
+        // e
+        if (e.error) {
+          // conflict
+          // TODO: handle duplicates by adding mat error
+          // if (e.status === 409) {
+          //   if (e.error == 'username') {
+
+          //   } else {
+              
+          //   }
+          // }
+          alert(`Failed to register: ${e.error}`)
+        } else {
+          alert(`Failed to reach server`)
+        }
       }
     });
   }
