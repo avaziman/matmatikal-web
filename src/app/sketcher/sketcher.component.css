@@ -1,2 +1,12 @@
-    mat-list-item {
+#sketcher {
+    display: flex;
+    flex-direction: row-reverse;
+    height: 100%;
+    width: 100%;
+    background-color: red;
+}
+
+#givens {
+    width: 20rem;
+    height: 20rem;
 }

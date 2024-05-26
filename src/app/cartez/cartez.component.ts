@@ -1,5 +1,5 @@
 import * as wasm from "algebrars";
-import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 // import { Line } from '../logic/line';
 import { find_intersection } from '../sketcher/function_analysis';
@@ -57,7 +57,7 @@ interface FunctionHover {
   templateUrl: './cartez.component.html',
   styleUrl: './cartez.component.css'
 })
-export class CartezComponent implements OnChanges {
+export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
   width!: number;
   height!: number;
@@ -67,6 +67,9 @@ export class CartezComponent implements OnChanges {
   @Output() onHover = new EventEmitter<Point | undefined>();
 
   @Input() color = 'black';
+  @ViewChild('container', { static: true })
+  container!: ElementRef<HTMLDivElement>;
+
   @ViewChild('drawCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
   context!: CanvasRenderingContext2D;
@@ -85,10 +88,21 @@ export class CartezComponent implements OnChanges {
   vertical_lines: number[] = [];
   functions: FunctionWrapper[] = []
 
+  onResize(event: UIEvent) {
+    if (this.container.nativeElement.offsetWidth == this.width) {
+      this.draw();
+      return;
+    }
+
+    this.updateSize(this.container.nativeElement.offsetWidth,
+      this.container.nativeElement.offsetHeight);
+      console.log("UPDATED WIDTH")
+      this.draw();
+  }
   ngOnChanges(changes: SimpleChanges): void {
     if (this.context) {
       this.draw();
-   }
+    }
   }
 
   addPointCords(cords: Pos, letter: string, auto = false) {
@@ -220,24 +234,24 @@ export class CartezComponent implements OnChanges {
     this.context.beginPath();
     this.context.strokeStyle = color;
     this.context.fillStyle = color;
-    
+
     const ppos = this.cordToPixelPos(point.cords);
-    
+
     this.context.ellipse(ppos.x, ppos.y, radius, radius, 0, 0, 2 * Math.PI);
     this.context.fill();
-    
+
     this.context.lineWidth = 2;
     this.context.lineTo(ppos.x, ppos.y);
-    
+
     this.context.fill();
-    
+
     this.context.beginPath();
     this.context.textAlign = 'center';
 
     let txt = point.letter;
     // if (this.analytical) {
-      //   // coordinates
-      //   txt += `(${point.evaluated_pos.x}, ${point.evaluated_pos.y})`;
+    //   // coordinates
+    //   txt += `(${point.evaluated_pos.x}, ${point.evaluated_pos.y})`;
     // }
     const TEXT_PADDING = 5;
     this.context.fillText(txt, ppos.x, ppos.y - TEXT_PADDING * 2);
@@ -249,27 +263,34 @@ export class CartezComponent implements OnChanges {
   }
 
   ngOnInit() {
-    this.canvas.nativeElement.width = 800;
-    this.canvas.nativeElement.height = 500;
-
-    this.width = this.canvas.nativeElement.width;
-    this.height = this.canvas.nativeElement.height;
-
     let ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.context = ctx;
     }
+    this.updateSize(this.container.nativeElement.offsetWidth,
+      this.container.nativeElement.offsetHeight);
 
     this.context.fillStyle = "#eeeeee";
     this.context.fillRect(0, 0, this.width, this.height);
+
+    this.addFunction("0");
+    this.addVerticalLine(0);
+    this.draw();
+  }
+
+  ngAfterViewInit(): void {
+    this.draw();
+  }
+
+  updateSize(width: number, height: number) {
+    this.width = width;
+    this.height = height;
 
     let range = this.getRange();
     console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
-    this.addFunction("0");
-    this.addVerticalLine(0);
-    this.draw();
+
   }
 
   calculateFns() {
@@ -277,13 +298,13 @@ export class CartezComponent implements OnChanges {
       this.calculateFnValues(fn);
     }
   }
-  
+
   calculateFnValues(wrapped_fn: FunctionWrapper) {
     let start = performance.now();
     // calculate points
     for (let i = 0; i < this.width; i += 1) {
       const x = this.pixelPosToCord({ x: i, y: 0 }).x;
-      
+
       try {
         let evaluated = wrapped_fn.fast_fn.evaluate_float([wasm.VariableVal.new("x", x)]);
         wrapped_fn.values[i] = evaluated;
@@ -293,7 +314,7 @@ export class CartezComponent implements OnChanges {
       }
     }
     let elapsed = performance.now() - start;
-    console.log("ELAPSED",elapsed)
+    console.log("ELAPSED", elapsed)
     elapsed = Math.round(elapsed * 1000) / 1000;
     wrapped_fn.calculated_in_ms = elapsed;
   }

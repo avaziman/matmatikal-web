@@ -1,4 +1,12 @@
+div {
+    /* background-color: red; */
+    width:100%;
+    /* height: 100%; */
+    /* height: auto; */
+}
+
 canvas {
+    width: 100%;
     touch-action: none;
     -ms-content-zoomin: none;
     pointer-events: none;

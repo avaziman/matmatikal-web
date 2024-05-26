@@ -8,6 +8,7 @@ import { MatListModule} from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { ThemeServiceService } from '../theme-service.service';
 import { MathInputComponent } from "../math-input/math-input.component";
+import { MatIconModule } from "@angular/material/icon";
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -35,7 +36,7 @@ const FUNCTION_COLORS = [
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule, MatIconModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })

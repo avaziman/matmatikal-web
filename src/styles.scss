@@ -86,7 +86,7 @@ $light-theme: mat.define-light-theme((
  ),
 ));
 :root {
-  --primary-color:#2196f3; 
+  --primary-color:var(--mdc-icon-button-icon-color); 
   // --background-color: white;
 }
 

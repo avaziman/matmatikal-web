@@ -1,3 +1,3 @@
-<div (wheel)="onWheel($event)" (mousemove)="onMouseMove($event)">
-    <canvas #drawCanvas oncontextmenu="return false;">Fail</canvas>
+<div #container (window:resize)="onResize($event)" (wheel)="onWheel($event)" (mousemove)="onMouseMove($event)">
+    <canvas #drawCanvas oncontextmenu="return false;" [width]="width" [height]="height">Fail</canvas>
 </div>
