@@ -1,5 +1,5 @@
 import { EventEmitter, Injectable } from '@angular/core';
-
+const DARK_THEME = 'dark-theme';
 @Injectable({
   providedIn: 'root'
 })
@@ -9,14 +9,19 @@ export class ThemeServiceService {
    this.darkMode = !this.darkMode;
    this.emitter.emit(this.darkMode);
     if (this.darkMode) {
-      document.body.classList.add('dark-theme');
-      document.body.setAttribute('theme', 'dark');
+      document.body.classList.add(DARK_THEME);
+      window.localStorage.setItem(DARK_THEME, 'true');
     } else {
-      document.body.classList.remove('dark-theme');
+      window.localStorage.removeItem(DARK_THEME);
+      document.body.classList.remove(DARK_THEME);
     }
   }
 
   darkMode = false
 
-  constructor() { }
+  constructor() {
+    if (window.localStorage.getItem(DARK_THEME) != null) {
+      this.toggleThemeClick();
+    }
+   }
 }

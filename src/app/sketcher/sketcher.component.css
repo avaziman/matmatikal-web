@@ -1,12 +1,16 @@
 #sketcher {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     height: 100%;
     width: 100%;
-    background-color: red;
 }
 
 #givens {
-    width: 20rem;
-    height: 20rem;
+    max-width: 20rem;
+    width: 50%;
+    height: 100%;
+}
+
+app-cartez {
+    width: 100%;
 }
