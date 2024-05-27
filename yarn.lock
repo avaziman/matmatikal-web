@@ -181,7 +181,7 @@
     symbol-observable "4.0.0"
     yargs "17.7.2"
 
-"@angular/common@^17.0.0", "@angular/common@^17.0.0 || ^18.0.0", "@angular/common@17.3.10":
+"@angular/common@^17.0.0", "@angular/common@^17.0.0 || ^18.0.0", "@angular/common@>=17", "@angular/common@17.3.10":
   version "17.3.10"
   resolved "https://registry.npmjs.org/@angular/common/-/common-17.3.10.tgz"
   integrity sha512-6SfD21M3LujymmZsZQIxAsV8Bj5u6He6ImZ+p2rr7FAhFxpVJyKldK8LCmJcFsBD4srpQcxEZ0iDxXvg+0ihAw==
@@ -209,7 +209,7 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/core@^17.0.0", "@angular/core@^17.0.0 || ^18.0.0", "@angular/core@17.3.10":
+"@angular/core@^17.0.0", "@angular/core@^17.0.0 || ^18.0.0", "@angular/core@>=17", "@angular/core@17.3.10":
   version "17.3.10"
   resolved "https://registry.npmjs.org/@angular/core/-/core-17.3.10.tgz"
   integrity sha512-ocEKu7X0yFCOvgJn1uZy76qjhsjKvULrO1k/BuIX0nwhp61DTGYTvCqKmwCBLM8/gvcKYH5vMKMHoQKtiSGE0A==
@@ -3045,6 +3045,13 @@ ajv@^8.0.0, ajv@^8.8.2, ajv@^8.9.0, ajv@8.12.0:
   version "0.1.0"
   resolved "file:../algebrars/pkg"
 
+angular-ecmascript-intl@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.npmjs.org/angular-ecmascript-intl/-/angular-ecmascript-intl-3.0.1.tgz"
+  integrity sha512-7GM3rOHNOuN34QEPstOaRtvaiRtz5ydc0jQgTLGl+GITpao6K4qFOOusKRoEYDbQ8CLCBkWUJKnIMsB2Jt4OTw==
+  dependencies:
+    tslib "^2.3.0"
+
 ansi-colors@4.1.3:
   version "4.1.3"
   resolved "https://registry.npmjs.org/ansi-colors/-/ansi-colors-4.1.3.tgz"
@@ -3348,9 +3355,9 @@ camelcase@^5.3.1:
   integrity sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
 
 caniuse-lite@^1.0.30001587, caniuse-lite@^1.0.30001591:
-  version "1.0.30001621"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001621.tgz"
-  integrity sha512-+NLXZiviFFKX0fk8Piwv3PfLPGtRqJeq2TiNoUff/qB5KJgwecJTvCXDpmlyP/eCI/GUEmp/h/y5j0yckiiZrA==
+  version "1.0.30001623"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001623.tgz"
+  integrity sha512-X/XhAVKlpIxWPpgRTnlgZssJrF0m6YtRA0QDWgsBNT12uZM6LPRydR7ip405Y3t1LamD8cP2TZFEDZFBf5ApcA==
 
 chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
@@ -7135,9 +7142,9 @@ sass@*, sass@^1.3.0, sass@1.71.1:
     source-map-js ">=0.6.2 <2.0.0"
 
 sax@^1.2.4:
-  version "1.3.0"
-  resolved "https://registry.npmjs.org/sax/-/sax-1.3.0.tgz"
-  integrity sha512-0s+oAmw9zLl1V1cS9BtZN7JAd0cW5e0QH4W3LWEK6a4LaLEA2OTpGYWDY+6XasBLtz6wkm3u1xRw95mRuJ59WA==
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/sax/-/sax-1.4.0.tgz"
+  integrity sha512-G3nn4N8SRaR9NsCqEUHfTlfTM/Fgza1yfb8JP2CEmzYuHtHWza5Uf+g7nuUQq96prwu0GiGyPgDw752+j4fzQQ==
 
 schema-utils@^3.1.1:
   version "3.3.0"

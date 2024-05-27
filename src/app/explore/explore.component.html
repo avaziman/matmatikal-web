@@ -3,7 +3,7 @@
         <mat-card-subtitle>{{sketch.creator}}</mat-card-subtitle>
         <mat-card-footer>
             <!-- <div timeago [date]="sketch.creation_time"></div> -->
-        <div>{{sketch.creation_time| timeAgo}}</div>
+        <div>{{sketch.creation_time_unix * 1000 | intlRelativeTime}}</div>
 
         </mat-card-footer>
     </mat-card>
