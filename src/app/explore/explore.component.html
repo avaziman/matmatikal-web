@@ -1,0 +1,10 @@
+@for (sketch of sketches; track sketch.id) {
+    <mat-card>
+        <mat-card-subtitle>{{sketch.creator}}</mat-card-subtitle>
+        <mat-card-footer>
+            <!-- <div timeago [date]="sketch.creation_time"></div> -->
+        <div>{{sketch.creation_time| timeAgo}}</div>
+
+        </mat-card-footer>
+    </mat-card>
+}

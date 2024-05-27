@@ -7,6 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideMarkdown } from 'ngx-markdown';
 
 export const appConfig: ApplicationConfig = {
+
   providers: [provideRouter(routes), provideAnimations(), provideAnimations(), provideHttpClient(), provideMarkdown()]
 
 };

@@ -1,23 +1,6 @@
-/* header {
-    background-color: #191919;
-    color: #106ac9;
-    font-family: sans-serif;
+header {
+    height: 4rem;
 }
-
-h1 {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-button {
-    font-size: larger;
-    font-weight: bolder;
-    height: 100%;
-    margin: auto 0;
-}
-*/
-
 
 ul {
     width: 100%;

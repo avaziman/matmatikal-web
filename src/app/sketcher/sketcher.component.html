@@ -63,9 +63,12 @@
                 <h3>Intersection Points</h3>
             </div>
         </mat-card-content>
+        <mat-card-actions>
+              <button mat-flat-button color="primary" (click)="shareClick($event)">Share</button>
+        </mat-card-actions>
     </mat-card>
     <app-cartez (onCord)="onCord($event)" (onHover)="onHover($event)" (mousedown)="onMouseDown($event)"
-        (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" [color]="color"
+        (mouseup)="onMouseUp($event)"  [color]="color"
         oncontextmenu="return false;"></app-cartez>
 
 </div>

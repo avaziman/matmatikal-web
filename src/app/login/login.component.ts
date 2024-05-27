@@ -1,7 +1,7 @@
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { CredentialResponse, PromptMomentNotification } from 'google-one-tap';
 
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input'
@@ -14,7 +14,27 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ThemeServiceService } from '../theme-service.service';
 import { MatIcon } from '@angular/material/icon';
 import { AuthService } from '../auth.service';
+import { finalize, take } from 'rxjs';
 const GOOGLE_CLIEND_ID = '794981933073-c59qh87r995625mjrk4iph5m89cd9s03.apps.googleusercontent.com';
+
+// function initGClient() {
+//   gapi.load('client:auth2', () => {
+//     gapi.client.init({
+//       apiKey: API_KEY,
+//       clientId: GOOGLE_CLIEND_ID,
+//       discoveryDocs: [],
+//       scope: 'user.birthday.read'
+//     }).then(() => {
+//       // Listen for sign-in state changes.
+//       gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+//       // Handle the initial sign-in state.
+//       updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+//       authorizeButton.onclick = handleAuthClick;
+//       signoutButton.onclick = handleSignoutClick;
+//     });
+//   });
+// }
 
 @Component({
   selector: 'app-login',
@@ -24,7 +44,7 @@ const GOOGLE_CLIEND_ID = '794981933073-c59qh87r995625mjrk4iph5m89cd9s03.apps.goo
   styleUrl: './login.component.css'
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   registerForm = this.formBuilder.group({
     email: new FormControl(undefined, [
       Validators.required, Validators.email]),
@@ -46,17 +66,19 @@ export class LoginComponent implements OnInit {
 
   }
 
+  ngAfterViewInit(): void {
+    
+  }
   ngOnInit() {
 
     this.operation = this.opToString(this.register);
     this.alternative_operation = this.opToString(!this.register);
     // dynamically load google library
-    let node = document.createElement('script');
-    node.src = "https://accounts.google.com/gsi/client";
-    node.type = 'text/javascript';
-    node.async = true;
-    node.defer = true;
-    document.getElementsByTagName('head')[0].appendChild(node);
+    const element = document.createElement('script');
+    element.src = "https://accounts.google.com/gsi/client";
+    element.type = 'text/javascript';
+    element.async = true;
+    element.defer = true;
 
     // @ts-ignore
     window.onGoogleLibraryLoad = () => {
@@ -65,7 +87,8 @@ export class LoginComponent implements OnInit {
       // @ts-ignore
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIEND_ID,
-        callback: this.googleResponse.bind(this) as any,
+        callback: this.googleResponse.bind(this as any) as any,
+        // callback: this.navigate.bind(this),
         auto_select: false,
         cancel_on_tap_outside: true,
       })
@@ -73,41 +96,52 @@ export class LoginComponent implements OnInit {
       // google.accounts.id.prompt();
       this.renderGoogleButton(this.themeService.darkMode)
     }
+    document.head.appendChild(element);
+
     this.themeService.emitter.subscribe((darkMode) => {
       this.renderGoogleButton(darkMode)
-    })
+    });
+  }
+  navigate() {
 
+    this.router.navigate(['/sketch']);
+  }
+
+  loginSuccessful(jwt_token: string) {
+    window.localStorage.setItem('jwt', jwt_token);
   }
 
   async googleResponse(response: CredentialResponse) {
     // your logic goes here
     let jwt = response.credential;
-    console.log(jwt);
-    
+
+    // this.router.navigate(['/sketch']);
     this.authService.google_login(jwt)
       .subscribe({
         next: ok => {
           // login successful
-          this.router.navigate(["/sketch"]);
-        },
+          console.log("Google login good");
+          this.loginSuccessful(ok);
+          window.location.href = window.location.href.replace('/login', '/sketch');
+          // nagivate bugs out for some reason
+         },
         error: e => {
-          // console.error('login error', e);
           // if (e.error) {
           //   alert('Login error: ' + e.error)
           // }
-          // user doesn't exist, try to register
-          this.register = true;
+          let error = e.error;
+          if (error?.gid) {
+            // user doesn't exist, but we got his google id, try to register
+            this.oauthSignInScope(error.gid, error.email);
+          }
+
         }
       });
-    
-    
-    if (this.register) {
-      this.oauthSignInScope();
-    }
+
   }
 
 
-  oauthSignInScope() {
+  oauthSignInScope(google_id: string, email: string) {
     // Google's OAuth 2.0 endpoint for requesting an access token
     var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
@@ -124,7 +158,7 @@ export class LoginComponent implements OnInit {
       'response_type': 'token',
       'scope': 'https://www.googleapis.com/auth/user.birthday.read',
       'include_granted_scopes': 'true',
-      // 'state': 'pass-through value'
+      'state': JSON.stringify({ google_id, email })
     };
 
     // Add form parameters as hidden input values.
@@ -164,7 +198,8 @@ export class LoginComponent implements OnInit {
         .subscribe({
           next: ok => {
             // login successful
-            this.router.navigate(["/sketch"]);
+            this.navigate();
+            this.loginSuccessful(ok);
           },
           error: e => {
             console.error('login error', e);
@@ -187,3 +222,4 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
   ) { }
 }
+

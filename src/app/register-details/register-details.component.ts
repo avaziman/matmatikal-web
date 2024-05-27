@@ -23,10 +23,11 @@ import { UserRegisterWeb } from '../../api_bindings/UserRegisterWeb';
 export class RegisterDetailsComponent implements OnInit {
 
   gradeControl = this.formBuilder.control<number>(0, [Validators.required]);
+  birthdayControl = this.formBuilder.control<Date>(new Date(), { validators: [Validators.required] });
+
   registerForm =
     this.formBuilder.group({
-      birthday: [new Date(), { validators: [Validators.required], nonNullable: true }]
-      ,
+      birthday: this.birthdayControl,
       grade: this.gradeControl,
       username: ['', [Validators.required]],
     });
@@ -34,25 +35,62 @@ export class RegisterDetailsComponent implements OnInit {
   email!: string;
   password!: string;
   google_id?: string;
-  
+
   grades = [...Array(13).keys()].splice(1).reverse();
 
   constructor(private formBuilder: NonNullableFormBuilder, private authService: AuthService,
-    private router: Router,
+    private router: Router, private activatedRoute: ActivatedRoute
   ) {
+
+  }
+
+  private parseFragments(fragment?: string): URLSearchParams | null {
+    if (!fragment) return null;
+
+    const params = new URLSearchParams(fragment);
+    return params;
+
   }
 
   ngOnInit() {
     let passed_values = history.state;
     this.email = passed_values['email'];
     this.password = passed_values['password'];
-    this.google_id = passed_values['password'];
-    
+
+
+    // Get the URL fragment
+    const fragment = this.activatedRoute.snapshot.fragment as string;
+
+    // Parse the fragment to extract the access token
+    const params = this.parseFragments(fragment);
+    if (params) {
+      const access_token = params.get('access_token');
+      const {google_id, email} = JSON.parse(params.get('state') as string);
+      this.email = email;
+      this.password = 'gid';
+
+      if (!access_token || !google_id) return;
+
+      console.log({ google_id, access_token });
+      this.authService.get_birthday(access_token, google_id).subscribe((date) => {
+        console.log("Got birthday", date);
+        const bday = new Date(date.year, date.month - 1, date.day);
+        this.setBirthday(bday);
+      })
+      
+    }
+
+
     // if (!this.email || !this.password) {
-    //   this.router.navigate(["/register"]);
-    // }
+      //   this.router.navigate(["/register"]);
+      // }
   }
   
+  setBirthday(date: Date) {
+    this.birthdayControl.setValue(date);
+    this.gradeControl.setValue(this.calculateGradeFromBirthday(date));
+  }
+
   onSubmit() {
     // if (!this.registerForm.valid)
     // let val = this.nFormBuilder.rec;
@@ -83,7 +121,7 @@ export class RegisterDetailsComponent implements OnInit {
           //   if (e.error == 'username') {
 
           //   } else {
-              
+
           //   }
           // }
           alert(`Failed to register: ${e.error}`)

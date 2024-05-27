@@ -1,20 +1,34 @@
 #sketcher {
     display: flex;
     flex-direction: row;
-    height: 100%;
+    /* header height */
+    height: calc(100% - 4rem);
+    overflow: hidden;
     width: 100%;
 }
 
 #givens {
-    flex: 2 2 100%; /* flex-grow: 2, flex-shrink: 2, flex-basis: 100% */
+    flex: 2 2 100%;
+    /* flex-grow: 2, flex-shrink: 2, flex-basis: 100% */
     max-width: 20rem;
-}
-
-#givens mat-card-content {
     height: 100%;
 }
 
+
+mat-card-actions {
+    margin-top: auto;
+    /* background-color: red; */
+    margin-bottom: 50px;
+}
+
+mat-card-actions button {
+    width: 100%;
+    margin: 0 1rem;
+}
+
 app-cartez {
-    flex: 1 1 100%; /* flex-grow: 1, flex-shrink: 1, flex-basis: 100% */
-    min-width: 10rem; /* Optional: Add if needed */
+    flex: 1 1 100%;
+    /* flex-grow: 1, flex-shrink: 1, flex-basis: 100% */
+    min-width: 10rem;
+    /* Optional: Add if needed */
 }

@@ -1,5 +1,5 @@
 import * as wasm from "algebrars";
-import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, Output, EventEmitter, OnChanges, SimpleChanges, OnInit, ChangeDetectorRef } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 // import { Line } from '../logic/line';
 import { find_intersection } from '../sketcher/function_analysis';
@@ -88,6 +88,10 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   vertical_lines: number[] = [];
   functions: FunctionWrapper[] = []
 
+  constructor(private cd: ChangeDetectorRef) {
+
+  }
+
   onResize(event: UIEvent) {
     if (this.container.nativeElement.offsetWidth == this.width) {
       this.draw();
@@ -96,8 +100,10 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.updateSize(this.container.nativeElement.offsetWidth,
       this.container.nativeElement.offsetHeight);
-      console.log("UPDATED WIDTH")
-      this.draw();
+    console.log("UPDATED WIDTH")
+    // update width & height
+    this.cd.detectChanges();
+    this.draw();
   }
   ngOnChanges(changes: SimpleChanges): void {
     if (this.context) {
@@ -217,6 +223,11 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     this.drawLine({ x, y: this.view_pos.y }, { x, y: this.view_pos.y + this.getRange().y });
   }
 
+  drawHorizontalLine(y: number) {
+    this.drawLine({ x: this.view_pos.x, y }, { x: this.view_pos.x + this.getRange().x, y });
+  }
+
+
   drawLine(p1: Pos, p2: Pos) {
     this.context.lineWidth = 2;
     this.context.strokeStyle = this.color;
@@ -266,17 +277,19 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     let ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.context = ctx;
+
+      this.updateSize(this.container.nativeElement.offsetWidth,
+        this.container.nativeElement.offsetHeight);
     }
-    this.updateSize(this.container.nativeElement.offsetWidth,
-      this.container.nativeElement.offsetHeight);
 
     this.context.fillStyle = "#eeeeee";
     this.context.fillRect(0, 0, this.width, this.height);
 
-    this.addFunction("0");
+    // this.addFunction("0");
     this.addVerticalLine(0);
-    this.draw();
   }
+
+
 
   ngAfterViewInit(): void {
     this.draw();
@@ -290,7 +303,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
-
+    
   }
 
   calculateFns() {
@@ -319,44 +332,49 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     // wrapped_fn.calculated_in_ms = elapsed;
   }
 
-  drawTeeth() {
+  drawTeethAxis(range: number, view_pos: number, drawLine: (pos: number, thooth_size: number) => void) {
     const TEETH_PER_AXIS = 10;
-    // size is constant in pixels, not in coordinates
     this.context.fillStyle = this.color;
-    const SIZE = 5 /* px */ / this.scale;
-
+    // const SIZE = 5 / this.scale; // px
     // round to one significant digit
-    let range = this.getRange();
-    let multipler = Math.pow(10, Math.floor(Math.log10(range.x)));
-    let pos_multipler = Math.pow(10, 1 + Math.abs(Math.floor(Math.log10(range.x))));
-    let spaces = (Math.floor(range.x / multipler) * multipler) / TEETH_PER_AXIS;
-    let start = Math.ceil(this.view_pos.x / spaces);
-    const total_teeth = range.x / spaces;
+
+    let multiplier = Math.pow(10, Math.floor(Math.log10(range)));
+    // for decimals
+    let pos_multipler = Math.pow(10, 1 + Math.abs(Math.floor(Math.log10(range))));
+    let spaces = (Math.floor(range / multiplier) * multiplier) / TEETH_PER_AXIS;
+
+    let start = Math.ceil(view_pos / spaces);
+    const total_teeth = range / spaces;
     // console.table({spaces, start ,multipler, range})
-
+    const TEETH_SIZE = 5 / this.scale;
     for (let i = start; i < start + total_teeth; i++) {
-      let x = Math.round(i * spaces * pos_multipler) / pos_multipler;
-      if (x === 0) continue;
-      // start +=
-      this.drawLine({ x, y: -SIZE }
-        , { x, y: SIZE }
-      );
+      if (i === 0) continue;
 
-      this.context.textAlign = 'center';
-
-      let pixelPos = this.cordToPixelPos({ x, y: SIZE });
-      this.context.fillText(this.shortNum(x), pixelPos.x - 5, pixelPos.y + 30);
+      const x = Math.round(i * spaces * pos_multipler) / pos_multipler;
+      drawLine(x, TEETH_SIZE);
+      // let pixelPos = this.cordToPixelPos({ x, y: SIZE });
     }
-    start = Math.ceil(this.view_pos.y / spaces);
-    for (let i = start; i < start + total_teeth; i++) {
-      let y = Math.round(i * spaces * pos_multipler) / pos_multipler;
-      if (y === 0) continue;
-      this.drawLine({ x: -SIZE, y }
-        , { x: SIZE, y }
+  }
+  drawTeeth() {
+    this.context.textAlign = 'center';
+    const range = this.getRange();
+    this.drawTeethAxis(range.x, this.view_pos.x, (x, thooth_size) => {
+      this.drawLine({ x, y: -thooth_size }
+        , { x, y: thooth_size }
       );
-      let pixelPos = this.cordToPixelPos({ x: SIZE, y });
+      let pixelPos = this.cordToPixelPos({ x, y: thooth_size });
+      this.context.fillText(this.shortNum(x), pixelPos.x, pixelPos.y + 30);
+    })
+
+    this.drawTeethAxis(range.y, this.view_pos.y, (y, thooth_size) => {
+      this.drawLine({ x: -thooth_size, y }
+        , { x: thooth_size, y }
+      );
+
+      let pixelPos = this.cordToPixelPos({ y, x: thooth_size });
       this.context.fillText(this.shortNum(y), pixelPos.x + 10, pixelPos.y + 5);
-    }
+    })
+
   }
 
   draw() {
@@ -379,6 +397,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
     this.context.fillStyle = "black";
 
+    this.drawHorizontalLine(0);
     this.drawTeeth();
 
     for (const fn of this.functions) {

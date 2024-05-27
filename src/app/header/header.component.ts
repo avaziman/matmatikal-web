@@ -18,6 +18,9 @@ export class HeaderComponent {
   
 
    items =
-    [{ path: 'login', text: "Login", icon: "login" },
-    { path: 'sketch', text: "Sketch", icon: "architecture" }]
+     [
+       { path: 'login', text: "Login", icon: "login" },
+       { path: 'sketch', text: "Sketch", icon: "architecture" },
+       { path: 'explore', text: "Explore", icon: "explore" }
+     ]
 }

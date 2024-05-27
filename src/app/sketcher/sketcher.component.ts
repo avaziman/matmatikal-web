@@ -10,6 +10,8 @@ import { ThemeServiceService } from '../theme-service.service';
 import { MathInputComponent } from "../math-input/math-input.component";
 import { MatIconModule } from "@angular/material/icon";
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatButtonModule } from "@angular/material/button";
+import { SketchService } from "../sketch.service";
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -37,12 +39,13 @@ const FUNCTION_COLORS = [
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule, MatIconModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule, MatIconModule, MatButtonModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
 
 export class SketcherComponent {
+
   letterIt = makeLetterIterator();
   expressions: string[] = [''];
   lines: string[] = [];
@@ -57,7 +60,9 @@ export class SketcherComponent {
   public myMath = Math;
 
   color: string = 'black';
-  constructor(private theme: ThemeServiceService) {
+  constructor(private theme: ThemeServiceService,
+    private sketchService: SketchService
+  ) {
     this.color = this.theme.darkMode ? "white" : "black";
     this.theme.emitter.subscribe((mode) => {
       this.color = mode ? "white" : "black";
@@ -145,15 +150,14 @@ export class SketcherComponent {
     }
   }
 
+  shareClick(event: MouseEvent) {
+    this.sketchService.upload().subscribe({
+      next: ok => {
+        console.log("Sketch uploaded, id:", ok)
+      },
+      error: e => {
 
-  onMouseMove(e: MouseEvent) {
-
-    let x = e.offsetX;
-    let y = e.offsetY;
-    let mousePos = { x, y };
-
-    // this.hovered = undefined;
-
+      }
+    })
   }
-
 }
