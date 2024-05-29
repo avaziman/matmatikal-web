@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { MathfieldElement, renderMathInDocument, renderMathInElement } from 'mathlive';
 
 import { ThemeServiceService } from '../theme-service.service';
@@ -15,8 +15,8 @@ MathfieldElement.soundsDirectory = 'assets/mathlive/sounds';  // fonts and sound
   encapsulation: ViewEncapsulation.None
   // styleUrl: '/node_modules/mathlive/dist/mathlive-fonts.css'
 })
-  
-  
+
+
 
 
 export class MathInputComponent implements AfterViewInit {
@@ -24,36 +24,42 @@ export class MathInputComponent implements AfterViewInit {
   mathFieldContainer!: ElementRef<HTMLDivElement>;
   @Output() expressionChange = new EventEmitter<string>();
   @Input() placeholder = 'x';
+  @Input() value_latex = '';
   mathField!: MathfieldElement;
 
   constructor(themeService: ThemeServiceService, private element: ElementRef) {
     // themeService.emitter.subscribe(s => {
-      //   renderMathInElement(this.mathField)
-      // })
-    }
-    
-  ngAfterViewInit() {
-      
-    
-      console.log('MathLive version', MathfieldElement.version);
-      this.mathField = new MathfieldElement({
-        // smartFence: true
-        defaultMode: 'math',
-        contentPlaceholder: this.placeholder
-      })
-    this.mathField.menuItems = [];
-    this.mathFieldContainer.nativeElement.appendChild(this.mathField);
+    //   renderMathInElement(this.mathField)
+    // })
+  }
 
+  ngAfterViewInit() {
+
+    
+    
+    console.log('MathLive version', MathfieldElement.version);
+    this.mathField = new MathfieldElement({
+      // smartFence: true
+      defaultMode: 'math',
+      contentPlaceholder: this.placeholder
+    })
+    this.mathField.menuItems = [];
+    this.mathField.setValue(this.value_latex);
+    this.mathFieldContainer.nativeElement.appendChild(this.mathField);
+    
     this.mathField.addEventListener("input", (ev) => {
       let val = (ev.target as any).value;
-      this.expressionChange.emit(val)
+      this.expressionChange.emit(this.getValue())
       this.mathField.setValue(
         val,
         { silenceNotifications: true }
       )
     });
-
+    
   }
 
+  getValue(): string {
+    return this.mathField.getValue('latex');
+  }
 
 }

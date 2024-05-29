@@ -1,0 +1,31 @@
+#sketches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-around;
+}
+
+#sketches-container {
+    padding: 2rem 10%;
+}
+
+.sketch {
+    width: 20rem;
+    height: 25rem;
+}
+
+.cartez {
+    width: 18rem;
+    height: 16rem;
+    padding-bottom: 1rem;
+}
+
+/* button {
+    width: 100%;
+} */
+
+
+app-cartez {
+    height: 100%;
+}

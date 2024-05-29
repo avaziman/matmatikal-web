@@ -1,10 +1,27 @@
-@for (sketch of sketches; track sketch.id) {
-    <mat-card>
-        <mat-card-subtitle>{{sketch.creator}}</mat-card-subtitle>
-        <mat-card-footer>
-            <!-- <div timeago [date]="sketch.creation_time"></div> -->
-        <div>{{sketch.creation_time_unix * 1000 | intlRelativeTime}}</div>
-
-        </mat-card-footer>
-    </mat-card>
-}
+<div id="sketches-container">
+    <h1>Sketches</h1>
+    <mat-divider></mat-divider>
+    <div id="sketches">
+        @for (sketch of sketches; track sketch.id) {
+        <mat-card class="sketch">
+            <mat-card-header>
+                <mat-card-title>
+                    {{sketch.name}}
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+                <mat-divider></mat-divider>
+                <div class="cartez">
+                    <app-cartez [data]="sketch.data"></app-cartez>
+                </div>
+                <div>By {{'@' + sketch.creator}}, {{sketch.creation_time_unix * 1000 | intlRelativeTime}}</div>
+            </mat-card-content>
+            <mat-card-actions>
+                <button mat-stroked-button (click)="openSketch(sketch)" color="primary">Open</button>
+            </mat-card-actions>
+        </mat-card>
+        } @empty {
+            <div>No sketches!</div>
+        }
+    </div>
+</div>

@@ -1,6 +1,6 @@
 import * as wasm from "algebrars";
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { CartezComponent, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.component';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { CartezComponent, FunctionDescription, PRIMARY_COLOR, Point, Pos } from '../cartez/cartez.component';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -9,9 +9,12 @@ import { FormsModule } from '@angular/forms';
 import { ThemeServiceService } from '../theme-service.service';
 import { MathInputComponent } from "../math-input/math-input.component";
 import { MatIconModule } from "@angular/material/icon";
-import { MatGridListModule } from '@angular/material/grid-list';
 import { MatButtonModule } from "@angular/material/button";
 import { SketchService } from "../sketch.service";
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { UploadDialogComponent } from "../upload-dialog/upload-dialog.component";
+import { ActivatedRoute } from "@angular/router";
+import { Sketch } from "../../api_bindings/Sketch";
 
 function makeLetterIterator() {
   let letter = 'A';
@@ -39,15 +42,16 @@ const FUNCTION_COLORS = [
 @Component({
   selector: 'app-sketcher',
   standalone: true,
-  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule, MatIconModule, MatButtonModule],
+  imports: [CartezComponent, MatCardModule, CommonModule, MatInputModule, FormsModule, MathInputComponent, MatListModule, MatIconModule, MatButtonModule, MatDialogModule],
   templateUrl: './sketcher.component.html',
   styleUrl: './sketcher.component.css'
 })
 
-export class SketcherComponent {
+export class SketcherComponent implements OnInit, AfterViewInit {
 
   letterIt = makeLetterIterator();
   expressions: string[] = [''];
+  functions: FunctionDescription[] = [];
   lines: string[] = [];
   hovered?: Point;
   toggled?: Point;
@@ -59,28 +63,58 @@ export class SketcherComponent {
   cartez!: CartezComponent;
   public myMath = Math;
 
-  color: string = 'black';
   constructor(private theme: ThemeServiceService,
-    private sketchService: SketchService
+    private sketchService: SketchService,
+    private dialog: MatDialog,
+    private route: ActivatedRoute,
+    private changeDetector: ChangeDetectorRef,
   ) {
-    this.color = this.theme.darkMode ? "white" : "black";
-    this.theme.emitter.subscribe((mode) => {
-      this.color = mode ? "white" : "black";
+  }
+
+  ngOnInit(): void {
+    
+    this.route.queryParams.subscribe(params => {
+      const sketch_param = params['sketch'];
+      if (!sketch_param) { return; }
+      const sketch = JSON.parse(sketch_param) as Sketch;
+      for (let i = 0; i < sketch.data.length; i++) {
+        const fn = sketch.data[i];
+        this.changeFn(i, fn.latex);
+      }
+      console.log({sketch})
     });
   }
 
+  ngAfterViewInit(): void {
+    this.changeDetector.detectChanges();
+  }
 
   changeFn(index: number, val: string) {
-    this.expressions[index] = val;
-    this.cartez.clearFunctions();
-    for (let i = 0; i < this.expressions.length; i++) {
-      const expr = this.expressions[i];
-      this.cartez.addFunction(expr, FUNCTION_COLORS[i % FUNCTION_COLORS.length])
-    }
-
-    if (index === this.expressions.length - 1 && this.expressions[index] !== "") {
+    const expr = val;
+    // exprexpr.replace('\\cdot', '*');
+    
+    if (index === this.expressions.length - 1 && expr !== "") {
       this.expressions.push("")
     }
+    this.expressions[index] = val;
+    console.log("expression change", {index, expr})
+    
+    const new_func = {
+      latex: expr,
+      color: FUNCTION_COLORS[index % FUNCTION_COLORS.length]
+    };
+
+    if (this.functions.length > index) {
+      this.functions[index] = new_func;
+      // console.log('changing func: ', index, new_func)
+    } else {
+      // console.log('adding func: ', index, new_func)
+      this.functions.push(new_func);
+    }
+    this.cartez.refreshFunctions();
+    
+    // to update expressions and math inputs
+    this.changeDetector.detectChanges();
   }
   onCord(cords: Pos) {
     // console.log(cord) 
@@ -151,13 +185,24 @@ export class SketcherComponent {
   }
 
   shareClick(event: MouseEvent) {
-    this.sketchService.upload().subscribe({
-      next: ok => {
-        console.log("Sketch uploaded, id:", ok)
-      },
-      error: e => {
-
+    let dialog = this.dialog.open(UploadDialogComponent);
+    dialog.afterClosed().subscribe(name => {
+      console.log('The dialog was closed');
+      console.log('name', name);
+      if (!name) {
+        // alert('Name required');
+        return;
       }
-    })
+
+      this.sketchService.upload({ name, data: this.functions }).subscribe({
+        next: ok => {
+          console.log("Sketch uploaded, id:", ok)
+        },
+        error: e => {
+
+        }
+      })
+    });
+
   }
 }

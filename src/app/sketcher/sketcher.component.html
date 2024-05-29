@@ -16,7 +16,7 @@
                     </h2>
 
                     @for (input of this.expressions; track $index) {
-                    <app-math-input mat-list-item (expressionChange)="changeFn($index, $event)"
+                    <app-math-input [value_latex]="input" mat-list-item (expressionChange)="changeFn($index, $event)"
                         placeholder="f(x)"></app-math-input>
                     }
                 </mat-list>
@@ -64,11 +64,10 @@
             </div>
         </mat-card-content>
         <mat-card-actions>
-              <button mat-flat-button color="primary" (click)="shareClick($event)">Share</button>
+            <button mat-flat-button color="primary" (click)="shareClick($event)">Share</button>
         </mat-card-actions>
     </mat-card>
     <app-cartez (onCord)="onCord($event)" (onHover)="onHover($event)" (mousedown)="onMouseDown($event)"
-        (mouseup)="onMouseUp($event)"  [color]="color"
-        oncontextmenu="return false;"></app-cartez>
+        (mouseup)="onMouseUp($event)" [data]="functions"></app-cartez>
 
 </div>

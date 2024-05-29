@@ -1,0 +1,12 @@
+<h2 mat-dialog-title>Upload Sketch</h2>
+<mat-dialog-content>
+  <p>Give your sketch a name</p>
+  <mat-form-field>
+    <mat-label>Sketch name</mat-label>
+    <input matInput [(ngModel)]="name">
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button matDialogClose>Cancel</button>
+  <button mat-button [mat-dialog-close]="name" cdkFocusInitial>Ok</button>
+</mat-dialog-actions>

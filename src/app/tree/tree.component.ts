@@ -30,6 +30,7 @@ export class TreeComponent {
 
   expressionChange(expr: string) {
     try {
+      
       const tree = wasm.MathTree.parse(expr);
       const latex = tree.to_latex();
       this.latex_expression = '$' + latex + '$';

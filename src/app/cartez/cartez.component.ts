@@ -3,6 +3,7 @@ import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener, O
 import { BehaviorSubject } from 'rxjs';
 // import { Line } from '../logic/line';
 import { find_intersection } from '../sketcher/function_analysis';
+import { ThemeServiceService } from "../theme-service.service";
 
 const DEFAULT_SCALE = 10;
 export const PRIMARY_COLOR = "#2196f3";
@@ -50,6 +51,11 @@ interface FunctionHover {
   pos: number
 }
 
+export interface FunctionDescription {
+  latex: string,
+  color?: string
+}
+
 @Component({
   selector: 'app-cartez',
   standalone: true,
@@ -61,12 +67,12 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
   width!: number;
   height!: number;
-
+  @Input() data: FunctionDescription[] = [];
 
   @Output() onCord = new EventEmitter<Pos>();
   @Output() onHover = new EventEmitter<Point | undefined>();
 
-  @Input() color = 'black';
+  color = 'black';
   @ViewChild('container', { static: true })
   container!: ElementRef<HTMLDivElement>;
 
@@ -88,7 +94,12 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   vertical_lines: number[] = [];
   functions: FunctionWrapper[] = []
 
-  constructor(private cd: ChangeDetectorRef) {
+  constructor(private cd: ChangeDetectorRef, private theme: ThemeServiceService) {
+    this.color = this.theme.darkMode ? "white" : "black";
+    this.theme.emitter.subscribe((mode) => {
+      this.color = mode ? "white" : "black";
+      this.draw();
+    });
 
   }
 
@@ -103,12 +114,23 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     console.log("UPDATED WIDTH")
     // update width & height
     this.cd.detectChanges();
+    this.calculateFns();
     this.draw();
   }
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.context) {
-      this.draw();
+    this.refreshFunctions()
+  }
+
+  refreshFunctions() {
+    this.clearFunctions();
+    for (const func of this.data) {
+      this.addFunction(func);
     }
+
+    if (!this.context) {
+      return;
+    }
+    this.draw();
   }
 
   addPointCords(cords: Pos, letter: string, auto = false) {
@@ -157,10 +179,13 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   clearFunctions() {
-    this.functions.splice(1, this.functions.length - 1);
+    this.functions = [];
   }
 
-  addFunction(expr: string, color?: string) {
+  addFunction(function_description: FunctionDescription) {
+    const expr = function_description.latex;
+    const color = function_description.color;
+
     try {
       const tree = wasm.MathTree.parse(expr);
       console.log("Added func", tree.to_latex());
@@ -175,7 +200,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
       try {
         let intersection = find_intersection(wrapped_fn);
-        console.log("INTERSECTION AT", intersection)
+        // console.log("INTERSECTION AT", intersection)
         if (intersection) {
           this.addPointCords(intersection.cords, "", true);
         }
@@ -292,6 +317,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
 
 
   ngAfterViewInit(): void {
+    this.refreshFunctions();
     this.draw();
   }
 
@@ -300,10 +326,10 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     this.height = height;
 
     let range = this.getRange();
-    console.log({ w: this.width, h: this.height, s: this.scale, r: range });
+    // console.log({ w: this.width, h: this.height, s: this.scale, r: range });
 
     this.view_pos = { x: -range.x / 2, y: -range.y / 2 };
-    
+
   }
 
   calculateFns() {
@@ -333,7 +359,18 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   drawTeethAxis(range: number, view_pos: number, drawLine: (pos: number, thooth_size: number) => void) {
-    const TEETH_PER_AXIS = 10;
+    const PIXEL_RANGE = this.cordToPixelPos({ x: range, y: 0 }).x;
+    const OPTIMAL_TOOTH_SPACE = 150;
+
+
+    const TEETH_PER_AXIS = [20, 10, 4, 6].reduce(function (prev, curr) {
+      let tooth_space = PIXEL_RANGE / curr;
+      let last_tooth_space = PIXEL_RANGE / prev;
+
+      return (Math.abs(tooth_space - OPTIMAL_TOOTH_SPACE) < Math.abs(last_tooth_space - OPTIMAL_TOOTH_SPACE) ? curr : prev);
+    }, 5);
+    // const TEETH_PER_AXIS = Math.round( / 200);
+
     this.context.fillStyle = this.color;
     // const SIZE = 5 / this.scale; // px
     // round to one significant digit
@@ -344,8 +381,8 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     let spaces = (Math.floor(range / multiplier) * multiplier) / TEETH_PER_AXIS;
 
     let start = Math.ceil(view_pos / spaces);
-    const total_teeth = range / spaces;
-    // console.table({spaces, start ,multipler, range})
+    const total_teeth = Math.ceil(range / spaces);
+
     const TEETH_SIZE = 5 / this.scale;
     for (let i = start; i < start + total_teeth; i++) {
       if (i === 0) continue;
@@ -563,6 +600,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   onMouseMove(e: MouseEvent) {
+    // if (!this.interactive) return;
     let ppos = { x: e.offsetX, y: e.offsetY };
     let cords = this.pixelPosToCord(ppos);
     this.onCord.emit(cords);
@@ -621,6 +659,7 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     this.draw();
 
   }
+
   closestToFnWithinDist(fn: FunctionWrapper, ppos: Pos, toggle_dist: number): { pos: Pos, dist: number } | undefined {
     let point_and_dist = undefined;
     for (let x = Math.max(0, ppos.x - toggle_dist); x < Math.max(ppos.x + toggle_dist, this.width); x += 1) {
@@ -639,7 +678,6 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
     return point_and_dist;
   }
 
-
   dist(p1: Pos, p2: Pos) {
 
     let dx = Math.abs(p1.x - p2.x);
@@ -650,5 +688,4 @@ export class CartezComponent implements OnInit, OnChanges, AfterViewInit {
   distWithin(p1: Pos, p2: Pos, d: number): boolean {
     return this.dist(p1, p2) < d;
   }
-
 }
