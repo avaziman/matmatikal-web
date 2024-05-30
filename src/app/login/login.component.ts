@@ -107,8 +107,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/sketch']);
   }
 
-  loginSuccessful(jwt_token: string) {
-    window.localStorage.setItem('jwt', jwt_token);
+  loginSuccessful(res: any) {
+    const { username } = res;
+    localStorage.setItem('username', username)
   }
 
   async googleResponse(response: CredentialResponse) {

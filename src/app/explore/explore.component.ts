@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { SketchService } from '../sketch.service';
 import { MatCardModule } from '@angular/material/card';
 import { Sketch } from '../../api_bindings/Sketch';
@@ -16,19 +16,49 @@ import { Router } from '@angular/router';
   templateUrl: './explore.component.html',
   styleUrl: './explore.component.css'
 })
-export class ExploreComponent implements OnInit {
-  constructor(private sketchService: SketchService, private router: Router ) { }
-  
+export class ExploreComponent implements OnInit, AfterViewInit {
+  constructor(private sketchService: SketchService, private router: Router) { }
+
   sketches: Sketch[] = [];
-  
+  username!: string;
+
+  ngOnInit(): void {
+    this.refreshSketches();
+  }
+
+  refreshSketches() {
+    this.sketchService.explore().subscribe({
+      next: r => {
+        this.sketches = r;
+      },
+      error: e => {
+        console.log(e.status)
+      }
+    })
+
+  }
+
+  ngAfterViewInit(): void {
+    this.username = window.localStorage.getItem('username') as string;
+    console.log('username', this.username)
+  }
+
   openSketch(sketch: Sketch) {
-    this.router.navigate(['/sketch'], {
+    this.router.navigate(['/sketch'], { 
       queryParams: { sketch: JSON.stringify(sketch) }
     })
   }
-  ngOnInit(): void {
-    this.sketchService.explore().subscribe(r => {
-      this.sketches = r;
+  deleteSketch(sketch: Sketch) {
+    const id = sketch.id;
+    this.sketchService.delete(id).subscribe({
+      next: r => {
+        // this.sketches = r;
+        this.refreshSketches()
+      },
+      error: e => {
+        console.log(e.status)
+      }
     })
+
   }
 }

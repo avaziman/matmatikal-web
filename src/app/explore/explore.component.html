@@ -18,6 +18,9 @@
             </mat-card-content>
             <mat-card-actions>
                 <button mat-stroked-button (click)="openSketch(sketch)" color="primary">Open</button>
+                @if (username === 'admin') {
+                    <button mat-stroked-button (click)="deleteSketch(sketch)" color="warn">Delete</button>
+                }
             </mat-card-actions>
         </mat-card>
         } @empty {

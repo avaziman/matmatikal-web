@@ -24,9 +24,11 @@ export class SketchService {
     return this.http.post<number>(this.api_url("upload"), uploadData, {withCredentials: true });
   }
 
-    explore(): Observable<Sketch[]> {
+  explore(): Observable<Sketch[]> {
     return this.http.get<Sketch[]>(this.api_url("explore"), {withCredentials: true });
   }
 
-
+  delete(sketchId: number): Observable<void> {
+    return this.http.delete<void>(this.api_url(`delete/${sketchId}`), { withCredentials: true });
+  }
 }
