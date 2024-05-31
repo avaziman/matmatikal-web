@@ -155,35 +155,6 @@ export class SketcherComponent implements OnInit, AfterViewInit {
     this.cartez.togglePoint();
   }
 
-  onMouseUp(_e: MouseEvent) {
-    if (this.toggled && this.hovered && this.toggled != this.hovered) {
-      // merge - change toggled to hovered
-      let del = [];
-      //   for (let i = 0; i < this.connections.length; i++) {
-      //     let c = this.connections[i];
-
-      //     if (c.a === this.toggled.p) {
-      //       c.a = this.hovered;
-      //     } else if (c.b === this.toggled.p) {
-      //       c.b = this.hovered;
-      //     }
-
-      //     if (c.a === c.b) {
-      //       del.push(i);
-      //     }
-      //   }
-
-      //   for (let i of del) {
-      //     this.connections.splice(i, 1);
-      //   }
-
-      //   this.points.splice(this.toggled.index, 1);
-      //   this.toggled = undefined;
-      // }
-      this.mouseDown = false;
-    }
-  }
-
   shareClick(event: MouseEvent) {
     let dialog = this.dialog.open(UploadDialogComponent);
     dialog.afterClosed().subscribe(res => {

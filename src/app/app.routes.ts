@@ -10,14 +10,14 @@ import { ExploreComponent } from './explore/explore.component';
 // import { PaintComponent } from './paint/paint.component';
 
 export const routes: Routes = [
-    { path: 'home', redirectTo: '', pathMatch: 'prefix' },
     { path: '', component: HomeComponent },
+    { path: 'home', redirectTo: '', pathMatch: 'prefix' },
     { path: 'login', component: LoginComponent },
     // { path: 'register', component: RegisterDetailsComponent },
     { path: 'register', component: RegisterComponent },
     { path: 'registering', component: RegisterDetailsComponent },
-    // { path: 'paint', component: PaintComponent }
     { path: 'sketch', component: SketcherComponent },
-    { path: 'tree', component: TreeComponent },
     { path: 'explore', component: ExploreComponent },
 ];
+
+// { path: 'tree', component: TreeComponent },
