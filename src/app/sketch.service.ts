@@ -21,11 +21,11 @@ export class SketchService {
   }
 
   upload(uploadData: UploadWeb): Observable<number> {
-    return this.http.post<number>(this.api_url("upload"), uploadData, {withCredentials: true });
+    return this.http.post<number>(this.api_url("upload"), uploadData, { withCredentials: true });
   }
 
-  explore(): Observable<Sketch[]> {
-    return this.http.get<Sketch[]>(this.api_url("explore"), {withCredentials: true });
+  explore(): Observable<{ [groupName: string]: Sketch[] }> {
+    return this.http.get<{ [groupName: string]: Sketch[] }>(this.api_url("explore"), { withCredentials: true });
   }
 
   delete(sketchId: number): Observable<void> {

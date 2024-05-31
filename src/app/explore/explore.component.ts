@@ -7,19 +7,22 @@ import { MatButtonModule } from '@angular/material/button';
 import { CartezComponent } from '../cartez/cartez.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
+import { KeyValuePipe } from '@angular/common';
 
 
 @Component({
   selector: 'app-explore',
   standalone: true,
-  imports: [MatCardModule, IntlRelativeTimePipe, MatButtonModule, CartezComponent, MatDividerModule],
+  imports: [MatCardModule, IntlRelativeTimePipe, MatButtonModule, CartezComponent, MatDividerModule, KeyValuePipe],
   templateUrl: './explore.component.html',
   styleUrl: './explore.component.css'
 })
 export class ExploreComponent implements OnInit, AfterViewInit {
+  Object = Object;
   constructor(private sketchService: SketchService, private router: Router) { }
 
-  sketches: Sketch[] = [];
+  sketches: { [groupName: string]: Sketch[] } = {};
+
   username!: string;
 
   ngOnInit(): void {

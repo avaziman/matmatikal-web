@@ -72,7 +72,7 @@ export class SketcherComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    
+
     this.route.queryParams.subscribe(params => {
       const sketch_param = params['sketch'];
       if (!sketch_param) { return; }
@@ -81,7 +81,7 @@ export class SketcherComponent implements OnInit, AfterViewInit {
         const fn = sketch.data[i];
         this.changeFn(i, fn.latex);
       }
-      console.log({sketch})
+      console.log({ sketch })
     });
   }
 
@@ -92,13 +92,13 @@ export class SketcherComponent implements OnInit, AfterViewInit {
   changeFn(index: number, val: string) {
     const expr = val;
     // exprexpr.replace('\\cdot', '*');
-    
+
     if (index === this.expressions.length - 1 && expr !== "") {
       this.expressions.push("")
     }
     this.expressions[index] = val;
-    console.log("expression change", {index, expr})
-    
+    console.log("expression change", { index, expr })
+
     const new_func = {
       latex: expr,
       color: FUNCTION_COLORS[index % FUNCTION_COLORS.length]
@@ -112,7 +112,7 @@ export class SketcherComponent implements OnInit, AfterViewInit {
       this.functions.push(new_func);
     }
     this.cartez.refreshFunctions();
-    
+
     // to update expressions and math inputs
     this.changeDetector.detectChanges();
   }
@@ -186,15 +186,16 @@ export class SketcherComponent implements OnInit, AfterViewInit {
 
   shareClick(event: MouseEvent) {
     let dialog = this.dialog.open(UploadDialogComponent);
-    dialog.afterClosed().subscribe(name => {
+    dialog.afterClosed().subscribe(res => {
+      const { sketch_name, group_name } = res;
       console.log('The dialog was closed');
-      console.log('name', name);
-      if (!name) {
+      console.log('name', sketch_name);
+      if (!sketch_name) {
         // alert('Name required');
         return;
       }
 
-      this.sketchService.upload({ name, data: this.functions }).subscribe({
+      this.sketchService.upload({ name: sketch_name, data: this.functions, group: group_name }).subscribe({
         next: ok => {
           console.log("Sketch uploaded, id:", ok)
         },

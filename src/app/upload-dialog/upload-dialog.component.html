@@ -3,10 +3,15 @@
   <p>Give your sketch a name</p>
   <mat-form-field>
     <mat-label>Sketch name</mat-label>
-    <input matInput [(ngModel)]="name">
+    <input matInput [(ngModel)]="sketch_name">
+  </mat-form-field>
+  <p>Which group does it belong to?</p>
+  <mat-form-field>
+    <mat-label>Group name</mat-label>
+    <input matInput [(ngModel)]="group_name">
   </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button matDialogClose>Cancel</button>
-  <button mat-button [mat-dialog-close]="name" cdkFocusInitial>Ok</button>
+  <button mat-button [mat-dialog-close]="{sketch_name, group_name}" cdkFocusInitial>Ok</button>
 </mat-dialog-actions>

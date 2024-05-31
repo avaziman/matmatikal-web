@@ -13,5 +13,6 @@ import { MatInputModule } from '@angular/material/input';
   styleUrl: './upload-dialog.component.css'
 })
 export class UploadDialogComponent {
-  name?: string
+  sketch_name?: string
+  group_name?: string
 }

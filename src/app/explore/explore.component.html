@@ -2,29 +2,44 @@
     <h1>Sketches</h1>
     <mat-divider></mat-divider>
     <div id="sketches">
-        @for (sketch of sketches; track sketch.id) {
-        <mat-card class="sketch">
+        @for (sketch_group of sketches | keyvalue; track sketch_group.key) {
+        <mat-card>
             <mat-card-header>
                 <mat-card-title>
-                    {{sketch.name}}
+                    Group {{sketch_group.key}}
                 </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-                <mat-divider></mat-divider>
-                <div class="cartez">
-                    <app-cartez [data]="sketch.data"></app-cartez>
-                </div>
-                <div>By {{'@' + sketch.creator}}, {{sketch.creation_time_unix * 1000 | intlRelativeTime}}</div>
-            </mat-card-content>
-            <mat-card-actions>
-                <button mat-stroked-button (click)="openSketch(sketch)" color="primary">Open</button>
-                @if (username === 'admin') {
+            <mat-divider></mat-divider>
+            @for (sketch of sketch_group.value; track sketch.id) {
+            <div class="sketch">
+                <mat-card-header>
+                    <mat-card-title>
+                        Sketch r{{sketch.name}}
+                    </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <mat-divider></mat-divider>
+                    <div class="cartez">
+                        <app-cartez [data]="sketch.data"></app-cartez>
+                    </div>
+                    <div>By {{'@' + sketch.creator}}, {{sketch.creation_time_unix * 1000 | intlRelativeTime}}</div>
+                </mat-card-content>
+                <mat-card-actions>
+                    <button mat-stroked-button (click)="openSketch(sketch)" color="primary">Open</button>
+                    @if (username === 'admin') {
                     <button mat-stroked-button (click)="deleteSketch(sketch)" color="warn">Delete</button>
-                }
-            </mat-card-actions>
+                    }
+                </mat-card-actions>
+            </div>
+            }
+            </mat-card-content>
         </mat-card>
-        } @empty {
-            <div>No sketches!</div>
         }
+        @empty {
+        <div>No sketches!</div>
+        }
+
+
     </div>
 </div>
